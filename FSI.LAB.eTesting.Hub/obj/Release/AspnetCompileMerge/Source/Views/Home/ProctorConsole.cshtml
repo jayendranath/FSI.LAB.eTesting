@@ -1,0 +1,523 @@
+﻿@{
+    ViewBag.Title = "Instructor Console";
+}
+
+<link href="~/Scripts/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-3.2.1.js"></script>
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<script src="~/Scripts/angular.min.js"></script>
+
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src="~/Controllers/Proctor.js"></script>
+<script src="~/Scripts/signalr/conHub.js"></script>
+<script type="text/javascript">
+    // partial page code ////////////////////////
+    var AssessmentID = AssessmentID;
+    var con = $.hubConnection('@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())');
+    //var con = $.hubConnection('http://localhost:52202/');
+    var hub = con.createHubProxy('labExamHub');
+    function starthub(assmntname, tbnum) {
+        con.qs = { SessionId: getSessionId() };
+        if (con.state == 4) {
+            con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] })
+                .done(function () { loadTable(assmntname, tbnum); })
+                .fail(function (err) { alert("Custom:" + err) });
+        }
+        else if (con.state == 1) {
+            loadTable(assmntname, tbnum);
+        }
+    }
+
+    function loadTable(assmntname, tbnum) {
+        if (con.state == 1) {
+            //if (procID != undefined) {
+            hub.invoke('JoinExamGroup', assmntname, "@System.Web.HttpContext.Current.Session["AdLoginPNo"].ToString()", "Proctor").done(function () {
+                //angular.element(document.getElementById('#divProctor')).scope().changedValue(AssessmentID);
+
+            }).fail(
+            function (err) {
+                invokeSeekPermission();
+            });
+            var $injector = angular.element($('#divProctor')).injector();
+            var element = angular.element($('#divProctor'));
+            $injector.invoke(function ($compile, $timeout) {
+                var scope = element.scope();
+                $compile(element)(scope);
+                try {
+                    $timeout(function () {
+                        scope.changedValue('@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]', AssessmentID, "@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()");
+                    });
+                }
+                catch (err) {
+                    alert("err: " + err);
+                }
+            })
+            //}
+            @*setTimeout(function () {
+                var name = $('#' + $("#tabs li").length + ' #divExamTitle').html();// $('#SelectAssessment  option:selected').text();
+                hub.invoke('StartGrpExam', name, '@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID',$('#' + $id + ' #hdnstatusid').val());
+
+            }, 1000);*@
+        }
+
+    }
+
+    function invokeSeekPermission() {
+        //alert("Proctor already started exam, would like to take over!!");
+        //if (confirm("Proctor already started exam, would like to take over!!")) {
+        //    hub.invoke("ProctorTransferRequest", AssessmentName, procID, "Proctor");
+        //}
+    }
+
+
+    //$(function () {
+
+    hub.on('ResumeExamAtProctor', function (id, name, extTime) {
+        for (i = 1; i <= $id; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + i + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineename = $.trim(this_row.find('td:eq(1)').html())
+                rowno++;
+                if (id === exmineename) {
+                    namerow = rowno;
+                    //$(this).children('td:nth-child(6)').css('background-color', 'green');
+                    //$(this).children('td:nth-child(5)').html(new Date().toLocaleString() + " CST");
+
+                    //$(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', 'green');
+                    $(this).children('td:nth-child(7)').html(extTime);
+                    $(this).children('td:nth-child(7)').attr("align", "center");
+                    $(this).children('td:nth-child(11)').find('#btnPauseExam img').attr('src', "@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Pause.png?@DateTime.Now.Ticks.ToString()");
+                }
+
+            });
+            //if (namerow > 0) {
+            //    var myTable = document.getElementById('tblnmlist' + i);
+            //    myTable.rows[namerow].cells[0].innerHTML = id;
+            //}
+        }
+    });
+
+    hub.on('addUserName', function (id, name, ip, compname) {
+        for (i = 0; i <= $('#tabs').length; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + (i + 1) + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineename = $.trim(this_row.find('td:eq(3)').html())
+                rowno++;
+                if (name.toLowerCase() === exmineename.toLowerCase()) {
+                    namerow = rowno;
+                    //$(this).children('td:nth-child(6)').css('background-color', 'green');
+                    //$(this).children('td:nth-child(5)').html(new Date().toLocaleString() + " CST");
+
+                    $(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', 'green');
+                    $(this).children('td:nth-child(9)').html(ip);
+                    $(this).children('td:nth-child(10)').html(compname);
+                }
+
+            });
+            if (namerow > 0) {
+                var myTable = document.getElementById('tblnmlist' + (i + 1));
+                myTable.rows[namerow].cells[0].innerHTML = id;
+            }
+        }
+    });
+
+    hub.on('StartedExamChStatus', function (id) {
+        for (i = 0; i <= $('#tabs').length; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + (i + 1) + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineeid = $.trim(this_row.find('td:eq(1)').html());
+                if (id.toLowerCase() === exmineeid.toLowerCase()) {
+                    //$(this).children('td:nth-child(6)').css('background-color', 'blue')
+                    $(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', 'blue');
+                    var dt = new Date();
+                    var currentTime = ("0" + (dt.getMonth() + 1)).slice(-2) + '/' + ("0" + dt.getDate()).slice(-2) + '/' + dt.getFullYear() + ' ' + ("0" + (dt.getHours())).slice(-2) + ":" + ("0" + (dt.getMinutes())).slice(-2) + ":" + ("0" + (dt.getSeconds())).slice(-2);
+                    $(this).children('td:nth-child(5)').html(currentTime + ' CST');
+                    //$(this).children('td:nth-child(6)').html('<div class="pbar" id="pbar" style="height:17px"></div>15%');
+                    //$("#pbar").progressbar({
+                    //    min: 1,
+                    //    max: 10,
+                    //    step: 1,
+                    //    value: 3
+                    //});
+                }
+
+            });
+        }
+    });
+    hub.on('updateAnsweredQuestionStatus', function (id, ansQnsCount, totQnsCount) {
+        for (i = 0; i <= $('#tabs').length; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + (i + 1) + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineeid = $.trim(this_row.find('td:eq(1)').html());
+                if (id.toLowerCase() === exmineeid.toLowerCase()) {
+                    //$(this).children('td:nth-child(6)').css('background-color', 'blue')
+                    $(this).children('td:nth-child(6)').html('<div class="pbar" id="pbar' + exmineeid + '" style="height:17px"></div>' + (ansQnsCount * 100 / totQnsCount).toFixed() + '%');
+                    $("#pbar" + exmineeid).progressbar({
+                        min: 1,
+                        max: totQnsCount,
+                        value: ansQnsCount
+                    });
+                }
+
+            });
+        }
+    });
+    hub.on('getConfirmExamExtend', function (id, fromid) {
+        var exmname = '';
+        var exmid = '';
+        $("#tblnmlist" + $id + " tr:gt(0)").each(function () {
+            var this_row = $(this);
+            var exmineeid = $.trim(this_row.find('td:eq(0)').html());
+            if (id === exmineeid) {
+                //$(this).children('td:nth-child(6)').css('background-color', 'blue')
+                exmname = $.trim(this_row.find('td:eq(1)').html());
+                exmid = $.trim(this_row.find('td:eq(2)').html());
+            }
+        });
+        if (confirm(exmname + ' requested to extend exam. Are you sure to extend exam time for examinee?')) {
+            hub.invoke("ProctorConformedExtendExam", fromid);
+        }
+    });
+
+    //hub.on('PausedExamChStatus', function (id) {
+    //    var rowno = 0; namerow = 0;
+    //    $("#tblnmlist" + $id + " tr:gt(0)").each(function () {
+    //        var this_row = $(this);
+    //        var exmineeid = $.trim(this_row.find('td:eq(0)').html());
+    //        if (id === exmineeid) {
+    //            //$(this).children('td:nth-child(6)').css('background-color', 'yellow')
+    //            $(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', 'yellow');
+    //        }
+
+    //    });
+    //});
+
+    hub.on('EndedExamChStatus', function (id) {
+        for (i = 0; i <= $('#tabs').length; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + (i + 1) + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineeid = $.trim(this_row.find('td:eq(1)').html());
+                if (id.toLowerCase() === exmineeid.toLowerCase()) {
+                    //$(this).children('td:nth-child(6)').css('background-color', 'red')
+                    $(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', 'red');
+                }
+
+            });
+        }
+    });
+
+    hub.on('OnExamineeDisconnected', function (id) {
+        var rowno = 0; namerow = 0;
+        for (i = 0; i <= $('#tabs').length; i++) {
+            $("#tblnmlist" + (i + 1) + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineeid = $.trim(this_row.find('td:eq(1)').html());
+                if (id === exmineeid) {
+                    //$(this).children('td:nth-child(6)').css('background-color', 'red')
+                    if ($(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color') == 'rgb(0, 0, 255)') {
+                        $(this).children('td:nth-child(8)').find('div[id="circle1"]').css('background-color', "rgb(252, 235, 5)");
+                        var ResponseDetails = JSON.stringify({
+                            //"ExamSessionId": $('#' + (i + 1) + ' #hdnexsessid').val(),
+                            "ExamScheduleId": $('#' + (i + 1) + ' #hdnexschid').val(),
+                            "ExamineeId": $.trim(this_row.find('td:eq(3)').html()),
+                            //"StatusId": "6",
+                            "EndTime": new Date(),
+                            "CreatedById": "@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()",
+                            "CreatedByIp": '@ViewData["ipAddress"]',
+                        });
+                        $.ajax({
+                            type: "POST",
+                            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/exam/examinee/terminateexam',
+                            data: ResponseDetails,
+                            contentType: "application/json",
+                            dataType: 'json',
+                            async: false,
+                            success: function (data, status, xhr) {
+                                //alert("The result is : " + status + ": " + data);
+                                //hub.invoke('ExamScheduleStatusIdChanged', "ProctorDashboard", $('#' + $id + ' #hdnexschid').val(), 6);
+                            },
+                            error: function (xhr) {
+                                alert("err: " + xhr.statusText);
+                            }
+                        });
+
+                    }
+                }
+
+            });
+        }
+    });
+
+    hub.on('AskProctorTransferConfirm', function (id) {
+        if (confirm(id + " requesting for Proctor session take over, would permit for take over!!")) {
+            hub.invoke("ProctorTransferConfirmed", AssessmentID, procID, id, "Proctor");
+        }
+    });
+
+    hub.on('AskProctorTransferConfirm', function () {
+        alert("Proctoring Session Transferred");
+        angular.element(document.getElementById('divProctor')).scope().changedValue(AssessmentID);
+    });
+
+    // Create a function that the hub can call to broadcast messages.
+    var unreadCount = 0;
+
+    hub.on('broadcastMessage', function (message, fromid) {
+        // Html encode display name and message.
+        var encodedMsg = $('<div />').text(message).html();
+        // Add the message to the page.
+        //$('#discussion').append('<li><strong>' + fromid + ': </strong>:&nbsp;&nbsp;' + encodedMsg + '</li>');
+        var exname;
+        for (i = 1; i <= $id; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + i + " tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var exmineeid = $.trim(this_row.find('td:eq(1)').html());
+                if (fromid.toLowerCase() === exmineeid.toLowerCase()) {
+                    //$(this).children('td:nth-child(6)').css('background-color', 'blue')
+                    $(this).children('td:nth-child(11)').find('#btnSendMsg img').attr('src', "@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/NewMessage.png?@DateTime.Now.Ticks.ToString()");
+                    exname = $(this).children('td:nth-child(3)').html();
+                    unreadCount += 1;
+                }
+            });
+        }
+        addClientMsg(encodedMsg, exname);
+        hub.invoke("ProctorRecievedMsg", AssessmentName, fromid);
+    });
+
+    function sendIndMsgFromProctor(msg, examineeid) {
+        hub.invoke('SendInvidualMsg', AssessmentName, examineeid, procID, msg);
+        var id; var exname;
+        for (i = 1; i <= $id; i++) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist" + i + " tr:gt(0)").each(function () {
+
+                var this_row = $(this);
+                var fromid = $.trim(this_row.find('td:eq(1)').html());
+                if (fromid.toLowerCase() === examineeid.toLowerCase()) {
+                    id = this_row.find("td:nth-child(4)").text();
+                    exname = this_row.find("td:nth-child(1)").text();
+                }
+            });
+        }
+        var ResponseDetails = JSON.stringify({
+            "Id": 0,
+            "SessionId": "",
+            "MessageReferenceId": AssessmentID,//(Examscheduleid)
+            "MessageLogTypeId": 0,
+            "MessageFromId": procID,
+            "MessageFromName": procID,
+            "MessageToId": examineeid,
+            "MessageToName": exname,
+            "MessageLogText": msg,//Sent Message
+            "CreatedById": "5A5623E1-673D-4026-AC50-32A41977EB29"
+        });
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/SaveMessageLog ',
+            data: ResponseDetails,
+            contentType: "application/json",
+            dataType: 'json',
+            async: false,
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+    }
+    //});
+
+    function unloadUpdate() {
+        //f ($('#' + $id + ' #btnGrpStartExam').html() == 'End Exam') {
+            var statusid = '';
+            debugger;
+            $.ajax({
+                type: "GET",
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/examschedule/' + $('#' + $id + ' #hdnexschid').val() + '/status',
+                data: ResponseDetails,
+                contentType: "application/json",
+                dataType: 'json',
+                async: false,
+                success: function (data, status, xhr) {
+                    statusid = data;
+                },
+                error: function (xhr) {
+                    alert("err: " + xhr.statusText);
+                }
+            });
+            if (statusid == '@FSI.LAB.eTesting.Hub.Models.GlobalVariables.ExamineeSessionType.InProgress.GetHashCode()') {
+                var ResponseDetails = JSON.stringify({
+                    "ExamSessionId": $('#' + $id + ' #hdnexsessid').val(),
+                    "ExamScheduleId": $('#' + $id + ' #hdnexschid').val(),
+                    //"StatusId": "6",
+                    //"EndTime": new Date(),
+                    //"ElapsedTime": $('#countdown').html(),
+                    "CreatedById": "@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()",
+                    "CreatedByIp": '@ViewData["ipAddress"]',
+                });
+                $.ajax({
+                    type: "POST",
+                    url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/exam/terminateexam',
+                    data: ResponseDetails,
+                    contentType: "application/json",
+                    dataType: 'json',
+                    async: false,
+                    success: function (data, status, xhr) {
+                        //alert("The result is : " + status + ": " + data);
+                        hub.invoke('ExamScheduleStatusIdChanged', "ProctorDashboard", $('#' + $id + ' #hdnexschid').val(), 6);
+                    },
+                    error: function (xhr) {
+                        alert("err: " + xhr.statusText);
+                    }
+                });
+            }
+        //}
+    }
+
+    ////////////////////////////////////////////
+
+    $(document).ready(function () {
+        window.opener.firtTabOpen();
+        $('.sidebar-toggle').hide();
+        $('.main-sidebar').hide();
+        $('.content-wrapper, .main-footer').css("margin-left", "0px");
+        $('.messages-menu').hide();
+        $('.notifications-menu').hide();
+        $('.tasks-menu').hide();
+        $('.dropdown-toggle').prop("disabled", "disabled");
+
+
+        $(window).bind('beforeunload', function (e) {
+            return "Unloading this page may lose data. What do you want to do..."
+        });
+
+
+        $(window).on('unload', function () {
+            unloadUpdate();
+        });
+
+    });
+
+
+
+    //function createTab(link1, num_tabs, assessmentname) {
+    function createTab(link1, assessmentname) {
+        var num_tabs = $("#tabs li").length + 1;
+        $("#tabs li").removeClass("active");
+        for (i = 0; i < num_tabs; i++) {
+            $('#' + i).removeClass("active");
+        }
+        //if (num_tabs == 1) {
+        var cn = "#" + num_tabs;
+        assessmentname = decodeURIComponent(assessmentname);
+        $("#tabs").append(
+        "<li class=\"active\" id=\"li_" + num_tabs + "\"><a href=\"#" + num_tabs + "\" class=\"tbclass\" name=\"" + num_tabs + "\" data-toggle=\"tab\">" + assessmentname +
+        "&nbsp;&nbsp;<button type=\"button\" class=\"btn btn-primary btntabclose\" ><span aria-hidden=\"true\">&times;</span></button></a></li>"
+        );
+
+        $("#tabcontent").append(
+                    "<div class=\"active tab-pane\" id=\"" + num_tabs + "\"></div>"
+        );
+        //}
+        //else
+        //{
+        //    var cn = "#" + num_tabs;
+        //    assessmentname = decodeURIComponent(assessmentname);
+        //    $("#tabs").append(
+        //    "<li><a href=\"#" + num_tabs + "\" data-toggle=\"tab\">" + assessmentname + "</a></li>"
+        //    );
+
+        //    $("#tabcontent").append(
+        //                "<div class=\"tab-pane\" id=\"" + num_tabs + "\"></div>"
+        //    );
+        //}
+        //$("#lbllinks").append("<label id=\"lbl" + num_tabs + "\">" + link1 + "</label>");
+        $(cn).load(link1 + "&id=" + num_tabs);
+        //$(cn).load('/eTesting/home/test?id=' + num_tabs)
+        starthub(assessmentname, num_tabs);
+
+    };
+    function setWindowFocus() {
+        window.focus();
+    }
+
+    function expandSidebar(examineeid, exname) {
+        if ($('.content-header')[0].innerHTML.indexOf('Instructor Console') == -1) {
+            if ($('.control-sidebar').css('right') === "0px") {
+                $('.control-sidebar').css('right', "-300px");
+                $('.control-sidebar-bg').css('right', "-300px");
+            }
+            else {
+                $('.control-sidebar').css('right', "0px");
+                $('.control-sidebar-bg').css('right', "0px");
+            }
+        }
+        else {
+            if ($('.control-sidebar').css('right') === "0px") {
+                $('.control-sidebar').css('right', "-300px");
+                $('.control-sidebar-bg').css('right', "-300px");
+            }
+            else {
+                $('.control-sidebar').css('right', "0px");
+                $('.control-sidebar-bg').css('right', "0px");
+            }
+        }
+
+        $('.box-title').html(exname);
+        $('#examineeid').html(examineeid);
+        $('#lblUnreadCount').html(unreadCount);
+        unreadCount = 0;
+        setTimeout(function () { $('.clsUnreadcircle').remove() }, 10000);
+        var itemFound = false;
+        $('#ulUserList li').each(function () {
+
+            if ($(this).attr('tag') === examineeid) {
+                itemFound = true;
+            }
+
+        });
+
+        if (itemFound == true) {
+
+        }
+        else {
+            $("#ulUserList").append("<li tag=\"" + examineeid + "\"><a href=\"#\">" + exname + "</a></li>");
+        }
+
+    }
+</script>
+@*<div class="nav-tabs-custom">
+        <ul class="nav nav-tabs" id='tabs'>
+            <li class="">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-TabCloseConfirm">
+                    Create an account
+                </button>
+
+            </li>
+            <li class="">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-TabCloseConfirm">
+                    Sign Up Here
+                </button>
+            </li>
+        </ul>
+    </div>*@
+
+<a href="#" hidden data-toggle="control-sidebar" id="expandanch"><i class="fa fa-gears"></i></a>
+
+<div class="row" ng-app="appProctor" ng-controller="conProctor" id="divProctor">
+    <div class="col-md-12">
+        <div class="nav-tabs-custom">
+            <ul class="nav nav-tabs" id='tabs'></ul>
+            <div class="tab-content" id="tabcontent">
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,124 @@
+﻿@{
+    ViewBag.Title = "Screen Management";
+
+}
+<script src='~/scripts/jquery-latest.min.js' type='text/javascript'></script>
+<script src="~/scripts/knockout-3.0.0.debug.js" type="text/javascript"></script>
+<script id="tableRow" type="text/html">
+    <tr>
+        <td>
+            <input type="text" class="form-control" data-bind="value: number, valueUpdate: 'keyup'" />
+        </td>
+        <td>
+            <input type="text" class="form-control"  />
+        </td>
+        <td>
+            <input type="text" class="form-control"  />
+        </td>
+        <td>
+            <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" data-bind="click: function(){ $data.remove(); }">
+                Delete
+            </button>
+        </td>
+    </tr>
+</script>
+
+<script type="text/javascript">
+
+    function tableRow(number, ownerViewModel) {
+        this.number = ko.observable(number);
+        this.remove = function () {
+            ownerViewModel.tableRows.destroy(this);
+        }
+    }
+
+    function tableRowsViewModel() {
+        var that = this;
+        this.tableRows = ko.observableArray([]);
+        this.addNewRow = function () {
+            this.tableRows.push(new tableRow('', that));
+        }
+        this.addNewRow();
+
+        //dependentObservable to represent the last row's value
+        this.lastRowValue = ko.dependentObservable(function () {
+            var rows = that.tableRows();
+            return rows.length ? rows[rows.length - 1].number() : null;
+        });
+
+        //subscribe to changes to the last row
+        this.lastRowValue.subscribe(function (newValue) {
+            if (newValue) {
+                that.tableRows.push(new tableRow('', that));
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        ko.applyBindings(new tableRowsViewModel());
+    });
+
+    $(function () {
+        $("#btnAddExaminee").click(function () {
+            ///create table dynamic
+            var prgtbid = '';
+            var tbcontent = '';
+            $("#exmstcount tr").each(function () {
+                prgtbid += $(this).find("td:first").text() + ","; //put elements into array
+            });
+            tbcontent += '<tr><td style="display:none;">' + $(this).attr('value') + '</td>';
+            tbcontent += '<td ><div  contenteditable="true">Name';
+            //tbcontent += '</td><td><div contenteditable="true" class="text-right" onkeypress="return IsNumberKeyed(event)">0</div></td><td><div  contenteditable="true" class="text-right"  onkeypress="return IsNumberKeyed(event)">0</div></td><td><div  contenteditable="true" class="text-right" onkeypress="return IsNumberKeyed(event)">0</div></td></tr>';
+            tbcontent += '</td><td><div  contenteditable="true">email</div></td><td><button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnAddExaminee" style="width:110px">Delete</button></td></tr>';
+            $('#exmstcount').append(tbcontent);
+
+        });
+    });
+</script>
+<div class="row">
+
+    <div class="col-xs-12 col-md-12">
+        @*<div class="box-header with-border">
+            <h3 class="box-title">Screens</h3>
+        </div>*@
+        <div class="box box-default">
+
+            <div class="box-body">
+                <!--Examinee list -->
+
+                <div class="row">
+
+                    <div class="form-group" style="margin-top:5px">
+                        <table border=1 style="width:100%" class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width:5%">
+                                        Screen Name
+                                    </th>
+                                    <th class="text-center" style="width:40%">
+                                        Controller
+                                    </th>
+                                    <th class="text-center" style="width:40%">
+                                        View Name
+                                    </th>
+                                    <th class="text-center" style="width:10%">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="template:{name:'tableRow', foreach: tableRows}"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>
+                                        <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" data-bind="click: addNewRow">
+                                            Add Screen
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

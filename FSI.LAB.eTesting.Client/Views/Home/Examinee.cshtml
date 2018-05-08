@@ -1,0 +1,1080 @@
+﻿@*<script src="~/cordovaApp/app.js"></script>
+    <script src="~/cordovadist/ios/cordova.js"></script>*@
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src="~/Controllers/Examinee.js"></script>
+<script src="~/Controllers/conHub.js"></script>
+<meta name="format-detection" content="telephone=no">
+
+<style type="text/css">
+    .content-header {
+        display: none;
+    }
+
+    .container {
+        background-color: #99CCFF;
+        border: thick solid #808080;
+        padding: 20px;
+        margin: 20px;
+    }
+
+    #overlay {
+        background: #ffffff;
+        color: #666666;
+        position: fixed;
+        height: 100%;
+        width: 100%;
+        z-index: 5000;
+        top: 0;
+        left: 0;
+        float: left;
+        text-align: center;
+        padding-top: 15%;
+    }
+</style>
+<!--Script references. -->
+<!--Reference the AngularJS libarary. -->
+<script type="text/javascript">
+    //var con = $.hubConnection();
+    con = $.hubConnection('@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())');
+    //var hub = con.createHubProxy('labExamineeHub');
+    hub = con.createHubProxy('labExamHub');
+
+    con.qs = { SessionId: getSessionId() };
+    con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] });
+
+    $(function () {
+
+
+        hub.on("EnableGrpReview", function () {
+            $('#ancReview img').attr('src', '../Images/Review.png? + @DateTime.Now.Ticks.ToString()');
+        })
+
+
+
+        var selRow;
+        $(document).on("click", "#btnStartExam", function () {
+            selRow = $(this)
+            @*var examineesessionid = selRow.closest('tr').find('td:eq(0)').text();
+            var examsessionid = selRow.closest('tr').find('td:eq(12)').text();
+            var ResponseDetails = JSON.stringify({
+                "ExamineeSessionId": examineesessionid,
+                "ExamSessionId": examsessionid,
+                "ExamineeId": "@System.Web.HttpContext.Current.Session["LoginGuid"].ToString()",
+                "StatusId": "1",
+                "ElapsedTime":"0",
+                "CreatedById": "@System.Web.HttpContext.Current.Session["LoginGuid"].ToString()",
+                "CreatedByIp": "::1",
+            });
+            $.ajax({
+                type: "POST",
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/examinee/startExamineeExam',
+                data: ResponseDetails,
+                contentType: "application/json",
+                dataType: 'json',
+                async: false,
+                success: function (data, status, xhr) {
+                    //alert("The result is : " + status + ": " + data);
+                },
+                error: function (xhr) {
+                    alert("err: " + xhr.statusText);
+                }
+            });*@
+            $('#hdnTableType').val("notstarted");
+            $("#modal-ValidateUser").modal('toggle');
+        });
+
+        $(document).on("click", "#btnResumeExam", function () {
+            selRow = $(this)
+            $('#hdnTableType').val("resume");
+            $("#modal-ValidateUser").modal('toggle');
+        });
+
+        hub.on('OnExamineeDisconnected', function (grpName) {
+            var rowno = 0; namerow = 0;
+            $("#tblnmlist tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var assname = $.trim(this_row.find('td:eq(2)').html())
+                //rowno++;
+
+                if (grpName === assname) {
+
+                    $(this).find('#btnStartExam').prop('disabled', true);
+                    $(this).find('#btnStartExam').prop("class", "btn btn-block btn-default");
+                }
+
+            });
+
+            $("#tblPausedExlist tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var assname = $.trim(this_row.find('td:eq(1)').html())
+                //rowno++;
+
+                if (grpName === assname) {
+
+                    $(this).find('#btnResumeExam').prop('disabled', true);
+                    $(this).find('#btnResumeExam').prop("class", "btn btn-block btn-default");
+                }
+
+            });
+
+            $("#tblComExlist tr:gt(0)").each(function () {
+                var this_row = $(this);
+                var assname = $.trim(this_row.find('td:eq(1)').html())
+                //rowno++;
+
+                if (grpName === assname) {
+
+                    $(this).find('#btnCompletedExam').prop('disabled', true);
+                    $(this).find('#btnCompletedExam').prop("class", "btn btn-block btn-default");
+                }
+
+            });
+
+            //alert("Proctor Disconnected");
+        });
+
+        function examscreen(stassessment, procid) {
+            if ($('#hdnTableType').val() == "notstarted") {
+                var str = selRow.closest('tr').find('td:eq(13)').text();
+                var schTitle = selRow.closest('tr').find('td:eq(2)').text();
+                var col10 = selRow.closest('tr').find('td:eq(10)').text();
+                var col11 = selRow.closest('tr').find('td:eq(11)').text()
+            }
+            if ($('#hdnTableType').val() == "resume") {
+                var str = selRow.closest('tr').find('td:eq(15)').text();
+                var schTitle = selRow.closest('tr').find('td:eq(1)').text();
+                var col10 = selRow.closest('tr').find('td:eq(12)').text();
+                var col11 = selRow.closest('tr').find('td:eq(13)').text()
+            }
+            //var str = selRow.closest('tr').find('td:eq(13)').text();
+            //var schTitle = selRow.closest('tr').find('td:eq(2)').text();
+            //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+            //var link1 = '@Html.Raw(Url.Action("ExamScreen", "Home", new { ExamScheduleID = "--1", ProctorID = "--2", ExamScheduletitle = "--3", eid = "--4", clientId = "--5",ExamineeType = "--6" }))';
+            var link1 = '@Html.Raw(Url.Action("ExamScreen", "Home", new { ExamScheduleID = "--1", ProctorID = "--2", ExamScheduletitle = "--3", eid = "--4", clientId = "--5", proctorGuid = "--6" }))';
+            link1 = link1.replace("--1", str);
+            link1 = link1.replace("--2", procid);
+            link1 = link1.replace("--3", schTitle);
+            link1 = link1.replace("--4", "@ViewData["eid"].ToString()");
+            link1 = link1.replace("--5", col10);
+            link1 = link1.replace("--6", col11);
+            //link1 = link1.replace("--6", getUrlParameter('examineetype'));
+            location.href = link1;
+
+        }
+
+        $(document).on("click", '#btnExamCancel', function (e) {
+            //window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee");
+            var str = selRow.closest('tr').find('td:eq(7)').text();
+            str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+            //angular.element(document.getElementById('divExaminee')).scope().startedexam(selRow.closest('tr').find('td:eq(1)').text(), str);
+            //angular.element(document.getElementById('divExaminee')).scope().addexaminee(selRow.closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+
+
+            examscreen(selRow.closest('tr').find('td:eq(0)').text(), str);
+            //lockscreen();
+        });
+
+        //$(document).on("click", '#btnLock', function (e) {
+        function lockscreen() {
+            //alert('resumenext');
+            try {
+
+                //var mp = cordova.require("com-plugin-examineeplugin-cam.hello");
+                //if (mp) {
+                //    // alert("In webapp: AmILate plugin Found !");
+                //}
+                //else {
+                //    alert("Lock Screen plugin NOT Found !");
+                //}
+                //var win = function (echo) { alert(echo); }
+                //var fail = function () { alert('fail!'); }
+                //mp.LockScreen('Your screen got locked', win, fail);
+
+            }
+            catch (err) {
+                alert(err)
+            }
+
+        }
+
+        //$(document).on("click", '#btnUnlock', function (e) {
+        //function unlock() {
+        //    //alert('resumenext');
+        //    try {
+        //        //var script1 = document.createElement("script");
+        //        //script1.type = "text/javascript";
+        //        //script1.src = "/cordovadist/ios/cordova.js";
+        //        //alert(script1.src);
+        //        //document.getElementsByTagName("head")[0].appendChild(script1);
+        //        //var script = document.createElement("script");
+        //        //script.type = "text/javascript";
+        //        //script.src = "/cordovaApp/app.js";
+        //        //document.getElementsByTagName("head")[0].appendChild(script);
+        //        //alert(script1.src);
+
+        //        var mp = cordova.require("com-plugin-examineeplugin-cam.hello");
+        //        if (mp) {
+        //            //alert("In webapp: AmILate plugin Found !");
+        //        }
+        //        else {
+        //            alert("UnLoack screen plugin NOT Found !");
+        //        }
+        //        var win = function (echo) { alert(echo); }
+        //        var fail = function () { alert('fail!'); }
+        //        mp.ReleaseLock('Your screen got unlocked', win, fail);
+        //    }
+        //    catch (err) {
+        //        alert(err)
+        //    }
+        //    //});
+        //}
+
+        $(document).on("click", '#btnTakePhoto', function (e) {
+            ///alert('resumenext');
+            var link1 = '@Url.Action("Index", "cordova")';
+            location.href = link1;
+        });
+
+        hub.on('StartExam', function (grpName, ProctorId) {
+            startExamHubJquery(grpName, ProctorId)
+        });
+
+        function startExamHubJquery(grpName, ProctorId) {
+            if ($('#hdnTableType').val() == "notstarted") {
+                if (selRow != undefined) {
+                    var str = selRow.closest('tr').find('td:eq(7)').text();
+                    str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                    examscreen(selRow.closest('tr').find('td:eq(0)').text(), str);
+                    //lockscreen();
+                    $('#modal-StartExam').modal('toggle');
+                }
+            }
+            if ($('#hdnTableType').val() == "resume") {
+                if (selRow != undefined) {
+                    var str = selRow.closest('tr').find('td:eq(16)').text();
+                    str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                    examscreen(selRow.closest('tr').find('td:eq(0)').text(), str);
+                    //lockscreen();
+                    $('#modal-StartExam').modal('toggle');
+                }
+            }
+        }
+
+        $(document).on("click", "#btnDispExam", function () {
+            if ($('#hdnTableType').val() == "notstarted") {
+                var str = selRow.closest('tr').find('td:eq(7)').text();
+                strproctor = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                var strcourse = selRow.closest('tr').find('td:eq(2)').text()
+                var struser = selRow.closest('tr').find('td:eq(10)').text();
+            }
+            if ($('#hdnTableType').val() == "resume") {
+                var str = selRow.closest('tr').find('td:eq(16)').text();
+                strproctor = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                var strcourse = selRow.closest('tr').find('td:eq(1)').text()
+                var struser = selRow.closest('tr').find('td:eq(12)').text();
+
+
+
+            }
+            //angular.element(document.getElementById('divExaminee')).scope().startedexam(selRow.closest('tr').find('td:eq(1)').text(), str);
+
+            //var lat;
+            //var lot;
+
+            //navigator.geolocation.getCurrentPosition(function (position) {
+            //    if (position.coords.latitude) {//Si la posición no es NULL
+            //        alert("Got browser: " + position.coords.latitude + " - " + position.coords.longitude);
+            //        lat = position.coords.latitude;
+            //        lot = position.coords.longitude;
+            //    }
+            //}, function (error) {
+            //    alert("Error on geolocation: " + error.message);
+            //}, { maximumAge: 3000, timeout: 30000, enableHighAccuracy: false });
+            $('#modal-StartExam').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            angular.element(document.getElementById('divExaminee')).scope().addexaminee(strcourse, strproctor, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()", struser);
+            if ($('#hdnTableType').val() == "resume") {
+                var statusid = '';
+                $.ajax({
+                    type: "GET",
+                    url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/examschedule/' + selRow.closest('tr').find('td:eq(15)').text() + '/status',
+                    data: ResponseDetails,
+                    contentType: "application/json",
+                    dataType: 'json',
+                    async: false,
+                    success: function (data, status, xhr) {
+                        //alert("The result is : " + status + ": " + data);
+                        statusid = data;
+                    },
+                    error: function (xhr) {
+                        alert("err: " + xhr.statusText);
+                    }
+                });
+                if (statusid == '@FSI.LAB.eTesting.Client.Models.GlobalVariables.ExamineeSessionType.InProgress.GetHashCode()') {
+                    var ResponseDetails = JSON.stringify({
+                        "ExamScheduleId": selRow.closest('tr').find('td:eq(15)').text(),
+                        "ExamineeId": selRow.closest('tr').find('td:eq(12)').text(),
+                        "EndTime": new Date(),
+                        "CreatedById": "@System.Web.HttpContext.Current.Session["LoginGuid"].ToString()",
+                        "CreatedByIp": '@ViewData["ipAddress"]',
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/exam/examinee/resumeexam ',
+                        data: ResponseDetails,
+                        contentType: "application/json",
+                        dataType: 'json',
+                        async: false,
+                        success: function (data, status, xhr) {
+                            //alert("The result is : " + status + ": " + data);
+                        },
+                        error: function (xhr) {
+                            alert("err: " + xhr.statusText);
+                        }
+                    });
+
+                    if (selRow != undefined) {
+                        var str = selRow.closest('tr').find('td:eq(16)').text();
+                        str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                        examscreen(selRow.closest('tr').find('td:eq(0)').text(), str);
+                        //lockscreen();
+                        $('#modal-StartExam').modal('toggle');
+                    }
+                }
+            }
+
+        });
+
+        //$(document).on("click", "#btnPauseExam", function () {
+        //    angular.element(document.getElementById('divExaminee')).scope().pausedexam();
+        //});
+        //$(document).on("click", "#btnEndExam", function () {
+        //    angular.element(document.getElementById('divExaminee')).scope().endedexam();
+        //});
+        //$(document).on("click", "#btnExamineeLogin", function () {
+        //    examineeName = $('#displayname').val();
+        //});
+
+    });
+
+
+    $(document).ready(function () {
+        var strurl = "";
+        //var examineetype = getUrlParameter('examineetype');
+        $('#divMyNewExams').show();
+        $('#divMyPausedExams').show();
+        $('#divMyCompletedExams').show();
+        @*if (examineetype == 1) {
+            strurl = '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/@ViewBag.LoginID/myexams';
+        }
+
+        if (examineetype == 2) {*@
+        strurl = '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/@ViewData["eid"].ToString()/exams';
+        //}
+        LoadExamMainTable(strurl)
+
+
+        con.isCrossDomain
+        con.qs = { SessionId: getSessionId() };
+        con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] }).done(function () {
+            angular.element(document.getElementById('divExaminee')).scope().getExaminee('@ViewBag.LoginID', '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]', "@ViewData["eid"].ToString()");
+            angular.element(document.getElementById('divExaminee')).scope().getExamineePausedExam();
+            angular.element(document.getElementById('divExaminee')).scope().getExamineeReviewExam();
+            $('#displayname').val('@ViewBag.LoginID');
+
+            setExamStartStatus1();
+            //setTimeout(function () { setExamStartStatus1(); }, 1000);
+
+        }).fail(function (err) { alert(err); });
+
+
+        @*if (examineetype == 2) {
+            //    return;
+
+            setTimeout(function () {
+                if ($('#btnStartExam').attr("class") != "btn btn-block btn-primary") {
+                    alert("No active exams for the user. Please check with instructor.");
+
+                    var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+                    location.href = link1;
+                }
+                else {
+                    setTimeout(function () { $("#btnStartExam").trigger("click"); }, 500);
+                    //$("#btnDispExam").trigger("click");
+                    //'
+                    setTimeout(function () { $("#btnDispExam").trigger("click"); }, 500);
+                }
+            }, 2000);
+            $('#divMyNewExams').hide();
+            $('#divMyPausedExams').hide();
+            $('#divMyCompletedExams').hide();
+        }*@
+
+
+
+    })
+
+    function LoadExamMainTable(strurl) {
+        $.ajax({
+            type: 'GET',
+            url: strurl,
+            //data: JSON.stringify({ "statusid": 0 }),
+            contentType: 'text/plain',
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                var rowdata = "";
+                if (data != "[]") {
+                    $.each(data, function (index, val) {
+                        //if (val.StatusId == 0) {
+                            rowdata = '<tr>';
+                            rowdata += '<td style="display:none">' + val.ExamineeSessionId + '</td>';
+                            rowdata += '                <td>' + val.AssessmentTitle + '</td>';
+                            rowdata += '    <td>' + val.Course + '</td>';
+                            rowdata += '    <td align="center">' + val.CourseType + '</td>';
+                            rowdata += '    <td align ="center">' + val.ScheduleDate + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.Version + '</td>';
+                            rowdata += '    <td class="text-center">' + val.Duration + '</td>';
+                            rowdata += '    <td style="display:none">' + val.ProctorName + '[' + val.ProctorPNumber + ']</td>';
+                            //rowdata += '    <td>' + val.ProctorName + '[' + val.ProctorPNumber + ']</td>';
+                            rowdata += '    <td class="text-center">' + val.NoOfQuestion + '</td>';
+                            rowdata += '    <td class="text-center" style="padding:0;margin:0;height:60px">';
+                            rowdata += '        <button type="button" id="btnStartExam" style="width:100%;display:block;padding:0;height:100%"';
+                            rowdata += '                class="btn btn-block btn-default" disabled>';
+                            rowdata += '            Start Exam';
+                            rowdata += '        </button>';
+                            rowdata += '    </td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamineeId + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ProctorId + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamSessionId + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamScheduleId + '</td>';
+                            rowdata += '</tr>';
+
+                            $('#tblnmlist').append(rowdata);
+                        //}
+                    });
+
+                }
+            },
+            error: function (error) {
+                alert("error: " + error)
+            }
+
+        });
+    }
+
+    function CheckAndAdd() {
+        angular.element(document.getElementById('divExaminee')).scope().getExaminee('@ViewBag.LoginID', '@System.Configuration.ConfigurationManager.AppSettings["websiteURL"]', "@ViewData["eid"].ToString()", getUrlParameter('examineetype'));
+
+    }
+
+    function startExamHub(grpName, ProctorId) {
+        startExamHubJquery(grpName, ProctorId)
+    }
+
+    function populatedtable(grpName, ProctorId) {
+        var rowno = 0; namerow = 0;
+        $("#tblnmlist tr:gt(0)").each(function () {
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(2)').html());
+            //rowno++;
+            var str = $.trim(this_row.find('td:eq(7)').text());
+            str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+            if (grpName === assname && str === ProctorId) {
+
+                $(this).find('#btnStartExam').prop('disabled', false);
+                $(this).find('#btnStartExam').prop("class", "btn btn-group-lg btn-primary");
+                hub.invoke("JoinExamGroup", assname, '@ViewBag.LoginID', "Examinee");
+                //$(this).find('#btnPauseExam').prop('disabled', false);
+                //$(this).find('#btnPauseExam').prop("class", "btn btn-sm btn-primary")
+                //$(this).find('#btnEndExam').prop('disabled', false);
+                //$(this).find('#btnEndExam').prop("class", "btn btn-sm btn-primary")
+            }
+
+        });
+
+        $("#tblPausedExlist tr:gt(0)").each(function () {
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(1)').html());
+            //rowno++;
+            var str = $.trim(this_row.find('td:eq(16)').text());
+            str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+            if (grpName === assname && str === ProctorId) {
+
+                $(this).find('#btnResumeExam').prop('disabled', false);
+                $(this).find('#btnResumeExam').prop("class", "btn btn-group-lg btn-primary");
+                hub.invoke("JoinExamGroup", assname, '@ViewBag.LoginID', "Examinee");
+                //$(this).find('#btnPauseExam').prop('disabled', false);
+                //$(this).find('#btnPauseExam').prop("class", "btn btn-sm btn-primary")
+                //$(this).find('#btnEndExam').prop('disabled', false);
+                //$(this).find('#btnEndExam').prop("class", "btn btn-sm btn-primary")
+            }
+
+        });
+        //enable completed exam review button
+        $("#tblComExlist tr:gt(0)").each(function () {
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(1)').html());
+            //rowno++;
+            var str = $.trim(this_row.find('td:eq(10)').text());
+            str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+            if (grpName === assname && str === ProctorId) {
+
+                $(this).find('#btnCompletedExam').prop('disabled', false);
+                $(this).find('#btnCompletedExam').prop("class", "btn btn-group-lg btn-primary");
+                hub.invoke("JoinExamGroup", assname, '@ViewBag.LoginID', "Examinee");
+                //$(this).find('#btnPauseExam').prop('disabled', false);
+                //$(this).find('#btnPauseExam').prop("class", "btn btn-sm btn-primary")
+                //$(this).find('#btnEndExam').prop('disabled', false);
+                //$(this).find('#btnEndExam').prop("class", "btn btn-sm btn-primary")
+            }
+
+        });
+
+    };
+
+    function openReview(ExamineeSessionId) {
+         var link1 = '@Html.Raw(Url.Action("ExamReview", "Home", new { ExamineeSessionId = "--1"}))';
+        link1 = link1.replace("--1", ExamineeSessionId);
+        location.href = link1;
+    }
+
+    function LoadCompletedExamData(jsondata) {
+        var trHTML = '';
+        $.ajax({
+            type: 'GET',
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/@ViewData["eid"].ToString()/completedexams',
+            //url: strurl,
+            //data: JSON.stringify({ "statusid": 4 }),
+            contentType: 'text/plain',
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                var rowdata = "";
+                if (data != "[]") {
+                    $.each(data, function (index, val) {
+                        trHTML = "<tr>"
+                        trHTML += '<td style="display:none">' + val.AssessmentId + '</td>';
+                        trHTML += '<td>' + val.Course + '</td>';
+                        trHTML += '<td>' + val.CourseType + '</td>';
+                        trHTML += '<td>' + val.StartDate + '</td>';
+                        trHTML += '<td class="text-center">' + val.NoOfQuestion + '</td>';
+                        trHTML += '<td class="text-center">' + val.CorrectResponses + '</td>';
+                        trHTML += '<td class="text-center">' + val.InCorrectResponses + '</td>';
+                        trHTML += '<td class="text-center">' + val.SkippedQuestions + '</td>';
+                        trHTML += '<td align="center">' + val.ExamResult + '</td>';
+                        //trHTML += '<td align="center">' + item.status + '</i></td>';
+                        //trHTML += '<td align="center"><div><a href="@Url.Action("ExamReview", "Home")?examsessionid=' + val.ExamineeSessionId + '" title="Start Review" ><img src="../Images/Review_Disable.png" height="30" width="30"/></a></div></td>';
+                        trHTML += '<td class="text-center" style="margin: 0px; padding: 0px; height: 50px;">' +
+                            '<button type="button" id="btnCompletedExam" onclick="openReview(' + val.ExamineeSessionId + ')" style="width:100%;display:block;padding:0;height:100%" class="btn btn-block btn-default" disabled> Review Exam </button></td>';
+                        trHTML += '    <td style="display:none">' + val.ProctorName + '[' + val.ProctorPNumber + ']</td>';
+                        trHTML += "</tr>";
+                        $('#tblComExlist').append(trHTML);
+                        hub.invoke("JoinExamGroup", val.Course, '@ViewBag.LoginID', "Examinee");
+                    });
+
+                }
+            },
+            error: function (error) {
+                alert("error: " + error)
+            }
+
+        });
+
+
+        //$.each(jsondata, function (i, item) {
+        //    trHTML = "<tr>"
+        //    trHTML += '<td style="display:none">' + item.AssessmentId + '</td>';
+        //    trHTML += '<td>' + item.Course + '</td>';
+        //    trHTML += '<td>' + item.CourseType + '</td>';
+        //    trHTML += '<td>' + item.StartedAt + '</td>';
+        //    trHTML += '<td class="text-center">' + item.NoOfQuestions + '</td>';
+        //    trHTML += '<td class="text-center">' + item.CorrectResponses + '</td>';
+        //    trHTML += '<td class="text-center">' + item.IncorrectResponses + '</td>';
+        //    trHTML += '<td class="text-center">' + item.SkippedQuestions + '</td>';
+        //    trHTML += '<td align="center">' + item.Result + '</td>';
+        //    //trHTML += '<td align="center">' + item.status + '</i></td>';
+        //    trHTML += '<td align="center">' + item.Review + '</td>';
+        //    trHTML += "</tr>";
+        //    $('#tblComExlist').append(trHTML);
+
+        //});
+
+        //$('#tblComExlist').append(trHTML);
+        //$('#ancReview').attr('href', '@Url.Action("ExamReview", "Home")?title=Beech KA 300 Series Familiarization 4 Days - Theory (EASA UAE)  - Wichita - 27-Nov-17&exID=@System.Web.HttpContext.Current.Session["LoginId"]&exname=@System.Web.HttpContext.Current.Session["LoginId"]');
+        if (con.state == 1) {
+            hub.invoke("JoinExamGroup", "MX-Beech 200 Series (PWC PT6) EASA", "@System.Web.HttpContext.Current.Session["LoginId"]", "Examinee");
+        }
+    }
+    function LoadPausedExamData(jsondata) {
+        var strurl = '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/@ViewData["eid"].ToString()/pausedexams';
+        $.ajax({
+            type: 'GET',
+            url: strurl,
+            //data: JSON.stringify({ "statusid": 1 }),
+            contentType: 'text/plain',
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                var rowdata = "";
+                if (data != "[]") {
+                    $.each(data, function (index, val) {
+                        //if (val.StatusId == 2 || val.StatusId == 3 || val.StatusId == 5 || val.StatusId == 6) {
+                            rowdata = '<tr>';
+                            rowdata += '<td style="display:none">' + val.ExamineeSessionId + '</td>';
+                            //rowdata += '                <td>' + val.AssessmentTitle + '</td>';
+                            rowdata += '    <td>' + val.Course + '</td>';
+                            rowdata += '    <td align="center">' + val.CourseType + '</td>';
+                            rowdata += '    <td align ="center">' + val.ScheduleDate + '</td>';
+                            rowdata += '    <td class="text-center">' + val.NoOfQuestion + '</td>';
+                            rowdata += '<td class="text-center">' + val.AnsweredQuestion + '</td>';
+                            rowdata += '<td class="text-center">' + val.UnAnsweredQuestion + '</td>';
+                            rowdata += '<td class="text-center">' + val.BookMarkedQuestion + '</td>';
+                            rowdata += '<td class="text-center">' + val.Duration + '</td>';
+                            rowdata += '<td class="text-center">' + val.RemainingTime + '</td>';
+                            if (val.StatusId == '@FSI.LAB.eTesting.Client.Models.GlobalVariables.ExamineeSessionType.InProgress.GetHashCode()')
+                                rowdata += '<td class="text-center">InProgress</td>';
+                            else if (val.StatusId == '@FSI.LAB.eTesting.Client.Models.GlobalVariables.ExamineeSessionType.Paused.GetHashCode()')
+                                rowdata += '<td class="text-center">Paused</td>';
+                            else if (val.StatusId == '@FSI.LAB.eTesting.Client.Models.GlobalVariables.ExamineeSessionType.Terminated.GetHashCode()')
+                                rowdata += '<td class="text-center">Terminated</td>';
+                            //else if (val.StatusId == 6)
+                            //    rowdata += '<td class="text-center">Terminated</td>';
+                            else
+                                rowdata += '<td class="text-center"></td>';
+                            rowdata += '<td align="center" style="padding:0;margin:0;height:60px">';
+                            rowdata += ' <button type="button" id="btnResumeExam" style="width:100%;display:block;padding:0;height:100%" class="btn btn-block btn-default" disabled> Resume Exam </button>';
+                            rowdata += '</td>';
+                            //    trHTML += "</tr>";
+                            //    $('#tblPausedExlist').append(trHTML);
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamineeId + '</td>';
+
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ProctorId + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamSessionId + '</td>';
+                            rowdata += '    <td style="display:none" class="text-center">' + val.ExamScheduleId + '</td>';
+                            rowdata += '    <td style="display:none">' + val.ProctorName + '[' + val.ProctorPNumber + ']</td>';
+                            rowdata += '</tr>';
+                            $('#tblPausedExlist').append(rowdata);
+
+                            if (val.ExamineeRefId.toLowerCase() == '@ViewBag.LoginID'.toLowerCase()) {
+                                //ProctorService.connectProctor(response.data[i].Course, input);
+                                hub.invoke("JoinExamGroup", val.Course, '@ViewBag.LoginID', "Examinee");
+                            }
+
+                        //}
+                    });
+
+                }
+            },
+            error: function (error) {
+                alert("error: " + error)
+            }
+
+        });
+
+        //$.each(jsondata, function (i, item) {
+        //    trHTML = "<tr>"
+        //    trHTML += '<td style="display:none">' + item.AssessmentId + '</td>';
+        //    trHTML += '<td>' + item.Course + '</td>';
+        //    trHTML += '<td>' + item.CourseType + '</td>';
+        //    trHTML += '<td>' + item.StartedAt + '</td>';
+        //    trHTML += '<td class="text-center">' + item.NoOfQuestions + '</td>';
+        //    trHTML += '<td class="text-center">' + item.Answered + '</td>';
+        //    trHTML += '<td class="text-center">' + item.UnAnswered + '</td>';
+        //    trHTML += '<td class="text-center">' + item.Bookmarked + '</td>';
+        //    trHTML += '<td class="text-center">' + item.Duration + '</td>';
+        //    trHTML += '<td class="text-center">' + item.RemTime + '</td>';
+        //    trHTML += '<td align="center" style="padding:0;margin:0;height:60px">';
+        //    trHTML += ' <button type="button" id="btnResumeExam" style="width:100%;display:block;padding:0;height:100%" class="btn btn-block btn-primary"> Resume Exam </button>';
+        //    trHTML += '</td>';
+        //    trHTML += "</tr>";
+        //    $('#tblPausedExlist').append(trHTML);
+
+        //});
+
+    }
+    function getexstatus(assname) {
+        //val st = 0
+        hub.invoke("GetExamineeStatus", assname).done(function (val) {
+            return val
+        });
+    }
+    function setExamStartStatus1() {
+        var rowno = 0; namerow = 0;
+        $("#tblnmlist tr:gt(0)").each(function () {
+
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(2)').html())
+            //rowno++;
+            var jsonText = JSON.stringify({ ExamineeName: assname });
+            var status = 0;
+
+            $.ajax({
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())' + "/WebServices/Proctoring.asmx/GetExamineeStatus",
+                data: jsonText,
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                cache: false, async: false,
+                success: function (data) {
+                    status = JSON.parse(data.d);
+                },
+                error: function (data) {
+                }
+
+            });
+            if (status == 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnStartExam').prop('disabled', false);
+                $(this).find('#btnStartExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+            if (status > 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnStartExam').prop('disabled', false);
+                $(this).find('#btnStartExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+        });
+
+        $("#tblPausedExlist tr:gt(0)").each(function () {
+
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(1)').html())
+            //rowno++;
+            var jsonText = JSON.stringify({ ExamineeName: assname });
+            var status = 0;
+
+            $.ajax({
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())' + "/WebServices/Proctoring.asmx/GetExamineeStatus",
+                data: jsonText,
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                cache: false, async: false,
+                success: function (data) {
+                    status = JSON.parse(data.d);
+                },
+                error: function (data) {
+                }
+
+            });
+            if (status == 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnResumeExam').prop('disabled', false);
+                $(this).find('#btnResumeExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+            if (status > 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnResumeExam').prop('disabled', false);
+                $(this).find('#btnResumeExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+        });
+
+        //for complted exams
+        $("#tblComExlist tr:gt(0)").each(function () {
+
+            var this_row = $(this);
+            var assname = $.trim(this_row.find('td:eq(1)').html())
+            //rowno++;
+            var jsonText = JSON.stringify({ ExamineeName: assname });
+            var status = 0;
+
+            $.ajax({
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())' + "/WebServices/Proctoring.asmx/GetExamineeStatus",
+                data: jsonText,
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                cache: false, async: false,
+                success: function (data) {
+                    status = JSON.parse(data.d);
+                },
+                error: function (data) {
+                }
+
+            });
+            if (status == 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnCompletedExam').prop('disabled', false);
+                $(this).find('#btnCompletedExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+            if (status > 0) {
+                //var str = $(this).closest('tr').find('td:eq(7)').text();
+                //str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+                $(this).find('#btnCompletedExam').prop('disabled', false);
+                $(this).find('#btnCompletedExam').prop("class", "btn btn-block btn-primary");
+                //angular.element(document.getElementById('divExaminee')).scope().addexaminee($(this).closest('tr').find('td:eq(1)').text(), str, "@ViewData["IP"].ToString()", "@ViewData["compName"].ToString()");
+            }
+        });
+    };
+
+    @*function getassstatus(assname) {
+        var jsonText = JSON.stringify({ ExamineeName: assname });
+        var status = 0;
+        var sturl = '@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())' + "/WebServices/Proctoring.asmx/GetExamineeStatus";
+        $.ajax({
+            url: sturl,
+            data: jsonText,
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            cache: false, async: false,
+            success: function (data) {
+                status = JSON.parse(data.d);
+            },
+            error: function (data) {
+            }
+
+        });
+        return status;
+    };*@
+
+    function sendMessage(msg) {
+        // Html encode display name and message.
+        var encodedMsg = $('<div />').text(msg).html();
+        // Add the message to the page.
+        $('#discussion').append('<li><strong>Proctor: </strong>:&nbsp;&nbsp;' + encodedMsg + '</li>');
+    };
+
+
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+            sURLVariables = sPageURL.split('&'),
+            sParameterName,
+            i;
+
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : sParameterName[1];
+            }
+        }
+    };
+
+    jQuery(window).load(function () {
+        jQuery('#overlay').fadeOut();
+    });
+</script>
+<script>var rootApp = angular.module('rootApp', ['appExaminee'])</script>
+<div id="overlay">
+    <img src="@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/Images/Loading.gif" alt="Loading" /><br />
+
+</div>
+<div ng-app="rootApp">
+
+    @* dialog on exam start *@
+    <div class="modal fade" id="modal-StartExam">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">eTesting Client</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <br />
+                            <br />
+                            <br />
+                            <h4>
+                                Please wait for the instructor to start the exam. <br />Waiting for everyone to join the exam...
+                            </h4>
+                            @*Select "Submit Final Answers" now. you will not able to return to this test.*@
+
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-default" id="btnexam" data-dismiss="modal" style="width:110px">Cancel</button>
+                            @*<button type="button" class="btn btn-primary btnTest" id="btnExamCancel" data-dismiss="modal" style="width:110px">Continue</button>*@
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog displayed when exam timed out *@
+    <div class="modal fade" id="modal-ValidateUser">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">eTesting Client</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            @*<h4 class="label-warning">
+                                    Information: Client validation.
+                                </h4>*@
+
+                            <br />
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="col-md-7">
+                                Please provide passcode for entering the exam
+                            </div>
+                            <div class="col-md-3">
+                                <input type="password" class="form-control" />
+                                <input type="text" id="hdnTableType" style="visibility:hidden" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary" id="btnDispExam" data-dismiss="modal">Continue</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    <div class="row loading-img overlay" id="divMyNewExams">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h3>My Scheduled Exams</h3>
+
+                    <div ng-app="appExaminee" ng-controller="ctrlExamniee" id="divExaminee" @*data-ng-init="ProctorInit()"*@>
+
+                        <table class="table table-bordered" style="width:100%" id="tblnmlist">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="display:none">ID</th>
+                                    <th class="text-center" style="width:25%">Exam</th>
+                                    <th class="text-center" style="width:27%">Course Name</th>
+                                    <th class="text-center" style="width:8%">Course Type</th>
+                                    <th class="text-center" style="width:15%" align="center">Exam Date/Time</th>
+                                    <th class="text-center" style="display:none">proctor</th>
+                                    @*<th class="text-center">proctor</th>*@
+                                    <th class="text-center" style="width:5%">Duration (min)</th>
+                                    <th class="text-center" style="display:none">Generated by</th>
+                                    <th class="text-center" style="width:5%">No. of Questions</th>
+                                    @*<th>Instructions</th>*@
+                                    <th class="text-center" style="width:15%">Action</th>
+                                    <th class="text-center" style="display:none">username</th>
+                                    <th class="text-center" style="display:none">proctorid</th>
+                                    <th class="text-center" style="display:none">examsessionid</th>
+                                    <th class="text-center" style="display:none">examscheduleid</th>
+                                    @*<th></th>
+                                        <th></th>*@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @*<tr ng-repeat="assessment in assessments" on-finish-render="ngRepeatFinished">
+                                    <td style="display:none">{{assessment.AssessmentID}}</td>
+                                    <td>{{assessment.Title}}</td>
+                                    <td>{{assessment.Course}}</td>
+                                    <td align="center">{{assessment.CourseType}}</td>
+                                    <td align ="center">{{assessment.ScheduledDate}}</td>
+                                    <td style="display:none" class="text-center">{{assessment.Version}}</td>
+                                    <td class="text-center">{{assessment.Duration}}</td>
+                                    <td style="display:none">{{assessment.GeneratedBy}}</td>
+                                    <td class="text-center">{{assessment.NoOfQuestion}}</td>
+                                    @*<td>{{assessment.Instructions}}</td>*@
+                                @*<td class="text-center">
+                                        <button type="button" id="btnStartExam" style="width:110px" disabled
+                                                class="btn btn-group-lg btn-default" >
+                                            Start Exam
+                                        </button>
+                                    </td>*@
+                                @*<td><button type="button" id="btnPauseExam" style="width:110px" class="btn btn-block btn-default disabled" disabled>Pause Exam</button></td>
+                                    <td><button type="button" id="btnEndExam" style="width:110px" class="btn btn-block btn-default disabled" disabled>End Exam</button></td>*@
+                                @*</tr>*@
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="divMyPausedExams">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h3>My Paused Exams</h3>
+                    <div class="">
+                        <table class="table table-bordered" style="width:100%" id="tblPausedExlist">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="display:none">ExamineeSessionId</th>
+                                    <th class="text-center">Exam</th>
+                                    <th class="text-center">Course Type</th>
+                                    <th class="text-center">Started At</th>
+                                    <th class="text-center">No. Of Questions</th>
+                                    <th class="text-center">Answered Questions</th>
+                                    <th class="text-center">Unanswered Questions</th>
+                                    <th class="text-center">Bookmarked Questions</th>
+                                    <th class="text-center">Exam Duration (min)</th>
+                                    <th class="text-center">Remaining Time (min)</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center" style="width:15%">Action</th>
+                                    <th class="text-center" style="display:none">ExamineeId</th>
+                                    <th class="text-center" style="display:none">ProctorId</th>
+                                    <th class="text-center" style="display:none">ExamSessionId</th>
+                                    <th class="text-center" style="display:none">ExamScheduleId</th>
+                                    <th class="text-center" style="display:none">Procter</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="divMyCompletedExams">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h3>My Completed Exams</h3>
+                    <div class="">
+                        <table class="table table-bordered" style="width:100%" id="tblComExlist">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="display:none">AssessmentId</th>
+                                    <th class="text-center">Exam</th>
+                                    <th class="text-center">Course Type</th>
+                                    <th class="text-center">Started At</th>
+                                    <th class="text-center">No. Of Questions</th>
+                                    <th class="text-center">Correct Responses</th>
+                                    <th class="text-center">Incorrect Responses</th>
+                                    <th class="text-center">Skipped Questions</th>
+                                    <th class="text-center">Result</th>
+                                    @*<th class="text-center">Status</th>*@
+                                    <th class="text-center">Correct to 100%</th>
+                                    <th class="text-center" style="display:none">proctor</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

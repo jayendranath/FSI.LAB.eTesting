@@ -1,0 +1,299 @@
+﻿@{
+    ViewBag.Title = "Supplemental Info";
+
+}
+<script src='~/scripts/jquery-latest.min.js' type='text/javascript'></script>
+<script src="~/scripts/knockout-3.0.0.debug.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+</script>
+<div class="row">
+
+    <div class="col-xs-12 col-md-12">
+        @*<div class="box-header with-border">
+                <h3 class="box-title">Screens</h3>
+            </div>*@
+        <div class="box box-default">
+
+            <div class="box-body">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Exam duration parameters</h3>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-body">
+
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    <label>Generator Name</label>
+                                </div>
+                                <div class="col-md-1">
+                                    <label> Mastery Level 1/Sec</label>
+                                </div>
+                                <div class="col-md-1">
+                                    <label>Mastery Level 2/Sec</label>
+                                </div>
+                                <div class="col-md-1">
+                                    <label>Mastery Level 3/Sec</label>
+                                </div>
+                                <div class="col-md-1">
+                                    <label>Mastery Level 4/Sec</label>
+                                </div>
+                                <div class="col-md-1">
+                                    <label>Subject to rounding</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    Generic 4.0
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Australia (CASA) (4.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Australia (CASA) (4.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Avionics Initial (2.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Avionics Initial (2.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX China (CAAC) (2.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX China (CAAC) (2.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Engine Run and Taxi (2.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Engine Run and Taxi (2.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Europe (EASA) (4.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Europe (EASA) (4.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX India (DGCA) (4.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX India (DGCA) (4.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Initial (3.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Initial (3.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX UAE (GCAA) (1.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX UAE (GCAA) (1.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="90" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+                        @*MX Update (2.0)*@
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-md-3">
+                                    MX Update (2.0)
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="text" class="form-control text-right" value="0" />
+                                </div>
+                                <div class="col-md-1">
+                                    <input type="checkbox" class="form-control" checked />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box-header">
+            <div class="row">
+
+                <div class="col-xs-7 col-md-4">
+
+                </div>
+                <div class="col-xs-7 col-md-8">
+                    <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnSubmit" style="width:110px">
+                        Submit
+                    </button>
+                    <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCancel" onclick="location.href='@Url.Action("licenseamendment", "LCM" , new { btntext="Contracts" })'" style="width:110px">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

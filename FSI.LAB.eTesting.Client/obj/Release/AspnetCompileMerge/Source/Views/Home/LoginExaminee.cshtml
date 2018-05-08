@@ -1,0 +1,222 @@
+﻿@{
+    Layout = null;
+}
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge;" />
+<meta name="viewport" content="width=device-width" />
+<meta charset="utf-8" />
+<!-- Bootstrap 3.3.7 -->
+<link href="~/Content/css/bootstrap.css" rel="stylesheet" />
+<!-- Font Awesome -->
+<link href="~/Content/css/font-awesome.min.css" rel="stylesheet" />
+<!-- Ionicons -->
+<!-- Theme style -->
+<link href="~/Content/css/fslabetesting.css" rel="stylesheet" />
+<link href="~/Content/css/skins/skin-blue.css" rel="stylesheet" />
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Controllers/Examinee.js"></script>
+<script src="~/Content/js/plugins/bootstrap/bootstrap.min.js"></script>
+
+<title>LoginExaminee</title>
+<style>
+    .boxeff {
+        -moz-box-shadow: 0 0 5px 5px #888;
+        -webkit-box-shadow: 0 0 5px 5px#888;
+        box-shadow: 0 0 5px 5px #888;
+    }
+</style>
+
+<script type="text/javascript">
+    $(document).on("change", "#selectCredentials", function () {
+        //console.log($(this).val());
+        if($("#selectCredentials option:selected").text() == 'Exam credentials')
+            $('#txtID').attr('placeholder', 'Exam username');
+        if($("#selectCredentials option:selected").text() == 'myFlightSafety credentials')
+            $('#txtID').attr('placeholder', 'myFlightSafety Username');
+
+    });
+
+    function validateUserNPassword(){
+        if ($('#txtID').val() == ""){
+            $('#errorText').html("Username cannot be null. Please try again ...")
+            $('#showError').show();
+            return false
+        }
+        //if ($('#txtPassword').val() == ""){
+        //    $('#errorText').html("Password cannot be null. Please try again ...")
+        //    $('#showError').show();
+        //    return false;
+        //}
+    }
+
+
+    $(document).on("click", "#btnLogin", function () {
+
+        if(validateUserNPassword() == false)
+            return;
+
+        jQuery.support.cors = true;
+        var exroleid = @Convert.ToInt16(FSI.LAB.eTesting.Client.Models.GlobalVariables.Roles.Examinee);
+        @*if($("#selectCredentials option:selected").text() == 'Exam credentials'){
+            $.ajax({
+                url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/validate/' + $('#txtID').val() + '/' + $('#txtPassword').val() + '/examinee',
+                //contentType: 'text/plain',
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                type: "GET", cache: false, async: false,
+                success: function (data) {
+                    var dt = data;
+                    //if (dt.UserId === 0) {
+                    if (dt === null) {
+                        //alert("User not found. Please try again ...");
+                        $('#errorText').html("Examinee not found. Please try again ...")
+                        $('#showError').show();
+                    }
+                    else {
+                        $.ajax({
+                            url: '@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/setUserID',
+                            data: { stuid: dt.UserName, examineetype: 2 },
+                            type: "GET", cache: false, async: false, datatype: "json"
+                        })
+                        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=" + dt.ExamineeId + "&examineetype=2");
+
+                    }
+                },
+                error: function (x, y, z) {
+                    alert(x.responseText + "  " + x.status);
+                }
+            });
+
+        }*@
+        //if($("#selectCredentials option:selected").text() == 'myFlightSafety credentials'){
+            $.ajax({
+                url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/validate/' + $('#txtID').val() + '/client',
+                //contentType: 'text/plain',
+                contentType: "application/json; charset=utf-8",
+                dataType: 'json',
+                type: "GET", cache: false, async: false,
+                success: function (data) {
+                    var dt = data;
+                    //if (dt.UserId === 0) {
+                    if (dt === null) {
+                        //alert("User not found. Please try again ...");
+                        $('#errorText').html("Examinee not found. Please try again ...")
+                        $('#showError').show();
+                    }
+                    else {
+                    //    if (dt.UserRoleEntities[0].RoleId != exroleid) {
+                    //        //alert("Login is not Client. Please try again ...");
+                    //        $('#errorText').html("The username or password you entered is incorrect. If you are having issues logging in, please contact your instructor");
+                    //        $('#showError').show();
+                    //    }
+                        //   else {
+                            $.ajax({
+                                url: '@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/setUserID',
+                                data: { stuid: dt.ClientRefId, stuname: dt.ClientName, stuguid: dt.ClientId},
+                                type: "GET", cache: false, async: false, datatype: "json"
+                            })
+                        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=" + dt.ClientId);
+                        //window.location.href = ("http://etestingwebapp.azurewebsites.net/home/examinee?eid=" + dt.ClientId);
+
+                        }
+                    //}
+                },
+                error: function (x, y, z) {
+                    alert(x.responseText + "  " + x.status);
+                }
+            });
+        //}
+        @*$.ajax({
+            url: '@System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString()/home/setUserID',
+            data: { stuid: $('#txtID').val() },
+            type: "GET", cache: false, async: false, datatype: "json"
+        })
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee");*@
+    });
+</script>
+<div class="row">
+    <div class="box box-default">
+        <div class="box-header" style="background:rgb(24,64,118);">
+            <div class="col-xs-1">
+                <span class="logo-lg"><img src="~/Images/FSI_Logo.png" style="height:50px;overflow:hidden;padding-left:30px" /></span>
+            </div>
+            <div class="col-xs-9"></div>
+            <div class="col-xs-1">
+                <span class="logo-lg"><img src="~/Images/lab_logo.png" style="height:50px;overflow:hidden;padding-right:30px" /></span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="box-body">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-9">
+                    <h3>Welcome to FlightSafety LAB eTesting</h3>
+                    Provide your myFlightSafety credentials to login. If any issues logging in, please contact your instructor
+                    <br />
+                    <br />
+                </div>
+            </div>
+
+            @*<div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-3">
+                    <label style="font-weight:normal">Login with</label>
+                    <select class="form-control" style="height:25px;padding:0" id="selectCredentials">
+                        <option>myFlightSafety credentials</option>
+                        <option>Exam credentials</option>
+                    </select>
+                    <br />
+                </div>
+            </div>*@
+
+            <div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-3">
+                    <label style="font-weight:normal">Username</label>
+                    <input type="text" id="txtID" class="form-control" placeholder="myFlightSafety Username" value="0007002372" style="height:25px;padding:0">
+                    <br />
+                </div>
+            </div>
+
+
+            <div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-3">
+                    <label style="font-weight:normal">Password</label>
+
+                    <input type="password" id="txtPassword" class="form-control" placeholder="Password" style="height:25px;padding:0">
+                    <br />
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-3">
+                    <div class="alert alert-danger alert-dismissible" id="showError" hidden>
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                        @*<h4><i class="icon fa fa-ban"></i> Alert!</h4>*@
+                        <div id="errorText">
+                            Danger alert preview. This alert is dismissable. A wonderful serenity has taken possession of my entire
+                            soul, like these sweet mornings of spring which I enjoy with my whole heart.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="col-xs-1">
+                </div>
+                <div class="col-xs-4">
+                    <button type="button" id="btnLogin" class="btn btn-primary" style="width:110px">Sign In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

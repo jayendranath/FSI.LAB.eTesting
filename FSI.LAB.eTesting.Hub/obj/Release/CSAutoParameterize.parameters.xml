@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="eTestingEntities-Web.config Connection String" description="eTestingEntities Connection String used in web.config by the application to access the database." defaultValue="metadata=res://*/EntityFramework.eTesting.csdl|res://*/EntityFramework.eTesting.ssdl|res://*/EntityFramework.eTesting.msl;provider=System.Data.SqlClient;provider connection string=&quot;data source=v0011ws0017;initial catalog=eTesting;user id=sa;password=admin@17;network library=dbmssocn;MultipleActiveResultSets=True;App=EntityFramework&quot;" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="D:\\D_Bkup\\Jayendra\\FlightSafety\\eTesting\\ExamineeDirect\\FSI\.LAB\.eTesting\\FSI\.LAB\.eTesting\.Hub\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='eTestingEntities']/@connectionString" />
+  </parameter>
+  <parameter name="eTestingConnection-Web.config Connection String" description="eTestingConnection Connection String used in web.config by the application to access the database." defaultValue="Data Source=v0011ws0017;Network Library=DBMSSOCN;Initial Catalog=eTesting;User ID=sa;Password=admin@17;" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="D:\\D_Bkup\\Jayendra\\FlightSafety\\eTesting\\ExamineeDirect\\FSI\.LAB\.eTesting\\FSI\.LAB\.eTesting\.Hub\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='eTestingConnection']/@connectionString" />
+  </parameter>
+  <parameter name="FSILABConnection-Web.config Connection String" description="FSILABConnection Connection String used in web.config by the application to access the database." defaultValue="Data Source=v0011ws0017;Network Library=DBMSSOCN;Initial Catalog=FSILAB;User ID=sa;Password=admin@17;" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="D:\\D_Bkup\\Jayendra\\FlightSafety\\eTesting\\ExamineeDirect\\FSI\.LAB\.eTesting\\FSI\.LAB\.eTesting\.Hub\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='FSILABConnection']/@connectionString" />
+  </parameter>
+  <parameter name="eLearningSignalRConnection-Web.config Connection String" description="eLearningSignalRConnection Connection String used in web.config by the application to access the database." defaultValue="Data Source=v0011ws0017;Network Library=DBMSSOCN;Initial Catalog=eLearningSignalR;User ID=sa;Password=admin@17;" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="D:\\D_Bkup\\Jayendra\\FlightSafety\\eTesting\\ExamineeDirect\\FSI\.LAB\.eTesting\\FSI\.LAB\.eTesting\.Hub\\obj\\Release\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='eLearningSignalRConnection']/@connectionString" />
+  </parameter>
+</parameters>

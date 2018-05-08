@@ -1,0 +1,156 @@
+﻿@{
+//ViewBag.Title = "Exam Schedules";
+
+}
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+
+<script src="~/Controllers/Proctor.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $.ajax({
+            type: 'GET',
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examschedules',
+            contentType: 'text/plain',
+            dataType: 'json',
+            success: function (data) {
+                var rowdata = "";
+                $.each(data, function (index, val) {
+                    //rowdata = '<tr>';
+                    //rowdata += '    <td>' + val.Course + '</td>';
+                    //rowdata += '<td>' + val.ScheduleDate + ' </td>';
+                    //rowdata += '<td>' + val.Duration + '</td>';
+                    //rowdata += '<td>' + val.PassPercentage + '</td>';
+                    //rowdata += '<td>' + val.RoomNumber + '</td>';
+                    //rowdata += '<td>' + val.AssessmentTitle + '</td>';
+                    //rowdata += '<td>' + val.ProgramTitle + '</td>';
+                    //rowdata += '<td>' + val.CenterName + '</td>';
+                    rowdata = '<tr>';
+                    rowdata += '<td hidden>' + val.ExamScheduleId + '</td>';
+                    rowdata += '<td>' + val.Course + '</td>';
+                    rowdata += '<td>' + val.AssessmentTitle + '</td>';
+                    rowdata += '<td>' + val.ProgramTitle + '</td>';
+
+                    rowdata += '<td>' + val.ScheduleDate + '</td>';
+                    rowdata += '<td class="text-center">' + val.Duration + '</td>';
+                    rowdata += '<td class="text-center">' + val.RoomNumber + '</td>';
+                    if (val.ExamScheduleProctorEntities.length > 0)
+                        rowdata += '<td>' + val.ExamScheduleProctorEntities[0].ProctorName + '</td>';
+                    else
+                        rowdata += '<td></td>';
+                    rowdata += '<td>';
+                    rowdata += '<button type="button" class="btn btn-primary" id="btnExamSchedule" style="width:50px"';
+                    rowdata += ' class="btn">';
+                    rowdata += ' Edit';
+                    rowdata += ' </button>';
+                    rowdata += ' <button type="button" class="btn btn-primary" id="btnScheduleHistory" style="width:70px"';
+                    rowdata += ' class="btn">';
+                    rowdata += ' History';
+                    rowdata += ' </button>';
+                    rowdata += ' </td>';
+                    rowdata += ' </tr>';
+
+                    $('#tblnmlist').append(rowdata);
+                });
+            },
+            error: function (error) {
+                alert(error)
+            }
+
+        });
+
+    })
+    $(document).on("click", "#btnExamSchedule", function () {
+        var scidvalue = $(this).closest('tr').find('td:eq(0)').text();
+        var strDate = new Date($(this).closest('tr').find('td:eq(4)').text());
+
+        var strDuration = $(this).closest('tr').find('td:eq(5)').text();
+        var newDateObj = moment(strDate).add(strDuration, 'm').toDate();
+        var currDate = new Date();
+        if (currDate > strDate && currDate < newDateObj) {
+            alert('Cannot Edit schedule as it is already started');
+        }
+        else
+            location.href = '@Url.Action("ExamScheduler", "Home", new { sid = "_sid" })'.replace("_sid", scidvalue);
+
+
+    });
+    //$(document).on("click", "#btnScheduleHistory", function () {
+    //var str = $(this).closest('tr').find('td:eq(0)').text();
+    //loadEventLog("ExamSchedule", str);
+    //$('#expandsidebar')[0].click();
+    //$('.control-sidebar').css('right', '0px');
+    //});
+</script>
+<style type="text/css">
+    .content-header {
+        display: none;
+    }
+</style>
+<div class="row">
+    <div class="box-header">
+        <div class="col-md-10" style="vertical-align:middle;float:left;padding-top:10px">
+            <h3 class="box-title">Exam Schedules</h3>
+        </div>
+        <div class="col-md-2" style="vertical-align:middle;float:left;">
+            <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCreate" onclick="location.href='@Url.Action("ExamScheduler", "Home", new { sid=0})'" style="width:110px">
+                Create
+            </button>
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-12;">
+
+        @*<div class="box-header">
+                <h3 class="box-title">Scheduler</h3>
+            </div>*@
+        <div class="box box-default">
+            <div class="box-body">
+                <div ng-app="appProctor" ng-controller="conProctor" id="divExamSchedule" data-ng-init="ExamSchedulersInit('@System.Configuration.ConfigurationManager.AppSettings["websiteURL"]')">
+                    <table class="table table-bordered table-hover" style="width:100%" id="tblnmlist">
+                        <thead>
+                            <tr>
+                                <th hidden>scheduleid</th>
+                                <th class="text-center">
+                                    Course
+                                </th>
+                                <th class="text-center">Assessment</th>
+                                <th class="text-center">
+                                    Program
+                                </th>
+
+                                <th class="text-center">Examination Date</th>
+                                <th class="text-center">Duration (Mins)</th>
+                                <th class="text-center">Room Number</th>
+                                <th class="text-center">Proctor</th>
+                                <th class="text-center" style="width:17%">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @*<tr ng-repeat="examschudule in examschudules">
+                                               <td hidden>{{examschudule.ScheduleId}}</td>
+                                               <td>{{examschudule.Course}}</td>
+                                <td>{{examschudule.AssessmentTitle}}</td>
+                                               <td>{{examschudule.ProgramTitle}}</td>
+
+                                               <td>{{formateddate(examschudule.ScheduleDate) | date:'MM/dd/yyyy hh:mm a'}}</td>
+                                               <td class="text-center">{{examschudule.Duration}}</td>
+                                               <td class="text-center">{{examschudule.RoomNumber}}</td>
+                                               <td>{{examschudule.ProctorUserName}}</td>
+                                               <td>
+                                                   <button type="button" id="btnExamSchedule" style="width:100px"
+                                                           class="btn">
+                                                       Edit
+                                                   </button>
+                                                   <button type="button" id="btnScheduleHistory" style="width:100px"
+                                                           class="btn">
+                                                       History
+                                                   </button>
+                                               </td>
+                                           </tr>*@
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

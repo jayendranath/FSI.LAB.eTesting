@@ -1,0 +1,1921 @@
+﻿@{
+//ViewBag.Title = "Examination";
+}
+@model IEnumerable<FSI.LAB.eTesting.Client.Models.QChoice>
+
+<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+<link href="~/Scripts/main.css" rel="stylesheet" />
+<link href="~/Scripts/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-3.2.1.js"></script>
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<script src="~/Scripts/angular.min.js"></script>
+<meta name="format-detection" content="telephone=no">
+@*<script src="~/cordovaApp/app.js"></script>
+    <script src="~/cordovadist/ios/cordova.js"></script>*@
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src='~/Scripts/jquery.zoom.min.js'></script>
+<script src="~/Scripts/script.js"></script>
+<script src="~/Controllers/conHub.js"></script>
+<link href="~/Content/css/ImageModal.css" rel="stylesheet" />
+@*<link href="~/Content/css/icheck/all.css" rel="stylesheet" />
+    <link href="~/Content/css/icheck/flat/blue.css" rel="stylesheet" />*@
+<link href="~/Content/css/icheck/flat/_all.css" rel="stylesheet" />
+
+
+@*<script src="~/Controllers/Examinee.js"></script>*@
+@*<script>var rootApp = angular.module('rootApp', ['appExaminee'])</script>*@
+<script type="text/javascript">
+    var AQDatacount = @(ViewData["AssessmentDataCount"]);//ViewData["AssessmentData"];
+    @{
+        var questionnumber = (object[])ViewData["QuestionNumbers"];
+    }
+
+    var AQData;
+    var QCount = 0;
+    var con = $.hubConnection('@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())');
+    //var con = $.hubConnection('http://localhost:52202');
+    var hub = con.createHubProxy('labExamHub');
+
+    con.qs = { SessionId: getSessionId() };
+    con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] }).done(function(){
+        hub.invoke('JoinExamGroup', '@ViewBag.ExamScheduletitle', '@ViewBag.LoginID', 'Examinee');
+        hub.invoke('StartedExam', '@ViewBag.ExamScheduletitle', '@ViewBag.LoginID', '@ViewBag.ProctorID');
+        hub.invoke("callAnsweredQuestionsStatus", "@ViewBag.ExamScheduletitle", "@ViewBag.LoginID", "@ViewBag.ProctorID", AnsQuestionCount() ,$('#progressbar').progressbar("option", "max"));
+
+    });
+
+    //get url paramenters
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+            sURLVariables = sPageURL.split('&'),
+            sParameterName,
+            i;
+
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : sParameterName[1];
+            }
+        }
+    };
+
+    // Converts image to canvas; returns new canvas element
+    function convertImageToCanvas(image) {
+        var img = new Image();
+        img.src = image
+        var canvas = document.createElement("canvas");
+        canvas.width = 600; //$("#QuestionImage").attr('width'); //image.width;
+        canvas.height = 600;//$("#QuestionImage").attr('height'); //image.height;
+
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, 600, 600);
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        return canvas;
+    }
+
+    // Converts canvas to an imagevar
+    function convertCanvasToImage(canvas) {
+        var image = new Image();
+        canvas.background = "white";
+        image.src = canvas.toDataURL("image/jpeg");
+
+        return image.src;
+    }
+
+    // function to display selected question in review button
+    function DisplayRevSelQuestion(qno, sno, displaymodal){
+        QCount = sno;
+        DisplayQuestion();
+        if (displaymodal ==1)
+            $("#modal-Review").modal('toggle');
+    }
+    //function to get question response and set the choice
+    function getnEnableQuestionResponse() {
+        //clear choice
+        $('#lblChoice1').iCheck('uncheck');
+        $('#lblChoice2').iCheck('uncheck');
+        $('#lblChoice3').iCheck('uncheck');
+        $('#lblChoice4').iCheck('uncheck');
+        var ansChoice = sessionStorage.getItem('ANS_' + $('#lblQuestionNo').html());
+        if (ansChoice == 1) $('#lblChoice1').iCheck('check')
+        if (ansChoice == 2) $('#lblChoice2').iCheck('check');
+        if (ansChoice == 3) $('#lblChoice3').iCheck('check');
+        if (ansChoice == 4) $('#lblChoice4').iCheck('check');
+        //setting default
+        $('#btnBookmark').css('background-color', "rgb(24, 64, 118)");
+        if (sessionStorage.getItem('BKM_' + $('#lblQuestionNo').html())  == 1)
+            $('#btnBookmark').css('background-color', "rgb(242, 178, 11)");
+        //else
+
+    }
+
+    //set question response on click of next button
+    function setQuestionResponse() {
+        var ansChoice = -1;
+        if ($('#lblChoice1').is(':checked')) { ansChoice = 1; }
+        if ($('#lblChoice2').is(':checked')) { ansChoice = 2; }
+        if ($('#lblChoice3').is(':checked')) { ansChoice = 3; }
+        if ($('#lblChoice4').is(':checked')) { ansChoice = 4; }
+        if (ansChoice != 0){
+            if (sessionStorage.getItem('ANS_' + $('#lblQuestionNo').html())== 0 || sessionStorage.getItem('ANS_' + $('#lblQuestionNo').html()) != ansChoice)
+                sessionStorage.setItem('ANS_' + $('#lblQuestionNo').html(), ansChoice);
+        }
+        else
+            sessionStorage.removeItem('ANS_' + $('#lblQuestionNo').html());
+        // "rgb(24, 64, 118)"  -  unBookmarked
+        // "rgb(242, 178, 11)" - Bookmarked
+        var boolBookmark=false;
+        if ($('#btnBookmark').css('background-color') == "rgb(24, 64, 118)"){
+            sessionStorage.removeItem('BKM_' + $('#lblQuestionNo').html());
+            boolBookmark = false;
+        }
+        if ($('#btnBookmark').css('background-color') == "rgb(242, 178, 11)"){
+            sessionStorage.setItem('BKM_' + $('#lblQuestionNo').html(), 1);
+            boolBookmark = true;
+        }
+        //return ansChoice;
+        //update response
+        var ResponseDetails = JSON.stringify([{
+            BookMark:boolBookmark,
+            EndTime:"",
+            ExamineeQuestionId:$('#lblQuestionNo').html(),
+            Remarks:"",
+            SelectedResponse:ansChoice,
+            StartTime:"",
+            StatusId:1,
+            RecordStatusId:1}]);
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/Exam/Examinee/responses',
+            //data: JSON.stringify([{"ExamineeQuestionId": "10"}]),
+            data: ResponseDetails,
+            contentType: "application/json",
+            //dataType: 'json',
+            //dataType: 'text',
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+    }
+
+    function DisplayQuestion() {
+        var assmentname = getUrlParameter('ExamScheduleID')
+        var jsonText = JSON.stringify({ QNo: QCount, ExamScheduleID: assmentname });
+
+        var link1 = '@Url.Action("GetAssessmentQuestion", "Home")';
+        $.ajax({
+            url: link1,
+            data: jsonText,
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            cache: false, async: false,
+            success: function (data) {
+                AQData = data;
+            },
+            error: function (data) {
+            }
+
+        });
+        if (AQData != "") {
+            if (QCount >= 0 && QCount < AQDatacount) {
+                //$('#lblQuestionNo').html(AQData[QCount].QuestionNumber);
+                //$('#lblExamTitle').html(AQData[QCount].AssessmentTitle);
+                //$('#lblQuestion').html(AQData[QCount].QuestionText);
+                ////$('#lblChoice1').html(AQData[QCount].Response1);
+                //$('label[for=lblChoice1]').html(AQData[QCount].Response1);
+                //$('label[for=lblChoice2]').html(AQData[QCount].Response2);
+                //$('label[for=lblChoice3]').html(AQData[QCount].Response3);
+                //$('label[for=lblChoice4]').html(AQData[QCount].Response4);
+                $('#lblQuestionNo').html(AQData.ExamineeQuestionId);
+                $('#lblExamTitle').html("@ViewBag.ExamScheduletitle");
+                $('#lblSubjectTitle').html(AQData.SubjectTitle);
+                $('#lblSectionNo').html(AQData.Sectiontitle);
+                $('#endExamHeader').html("End of exam: " + AQData.AssessmentTitle);
+                $('#lblQuestion').html(AQData.LABQuestionText);
+                //$('#lblChoice1').html(AQData.Response1);
+                $('label[for=lblChoice1]').html(AQData.AdjResponse1);
+                $('label[for=lblChoice2]').html(AQData.AdjResponse2);
+                $('label[for=lblChoice3]').html(AQData.AdjResponse3);
+
+                if (AQData.AdjResponse4 == "" || AQData.AdjResponse4 == null)
+                    $('#divChoice4Grp').hide();
+                else
+                {
+                    $('#divChoice4Grp').show();
+                    $('label[for=lblChoice4]').html(AQData.AdjResponse4);
+                }
+                if (AQData.SelectedResponse != -1){
+                    sessionStorage.setItem('ANS_' + $('#lblQuestionNo').html(), AQData.SelectedResponse);
+                    getnEnableQuestionResponse();
+                }
+                else
+                    getnEnableQuestionResponse();
+                //var imgobj = 'data:image/png;base64,' + AQData[0].AssessmentMediaEntity.MediaData;
+                //var base64String = arrayBufferToBase64(AQData[QCount].AssessmentMediaEntity.MediaData);
+                //$("#QuestionImage").attr('src', 'data:image/png;base64,' + base64String)
+                //if (AQData[QCount].AssessmentMediaEntity.MediaId != undefined) {
+                $('#ImageScenario').empty();
+                if (AQData.LABMediaId != '00000000-0000-0000-0000-000000000000'){
+                    var WebApiBaseUri = '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examResults/' + AQData.LABMediaId + '/mediadata';
+                    //var jsonText = JSON.stringify({ assessmentid:AQData.AssessmentId, mediaId: AQData.LABMediaId});
+                    $.ajax({
+                        url: WebApiBaseUri,
+                        contentType: 'text/plain',
+                        dataType: 'json',
+                        type: 'GET',
+                        success: function (data) {
+                            //$("#QuestionImage").attr('src', "data:image/jpg;base64," + data.d + "?" + new Date().getTime());
+                            //$('#ex1').zoom();
+                            if (AQData.AssessmentMediaEntity.MediaType == 'PNG'){
+                                var myImg = new Image();
+                                myImg.src = "data:image/jpg;base64," + data;
+
+                                var imgScnrio = '<span class="zoom" id="ex1">';
+                                imgScnrio += '<img id="QuestionImage" style="width:100%;height:100%; object-fit:contain;background-color:white;" alt="Unable to display image">';
+                                imgScnrio += '</span>';
+                                $('#ImageScenario').append(imgScnrio);
+                                $("#QuestionImage").attr('src', "data:image/jpg;base64," + data );
+                                //$("#QuestionImage").attr('src', convertCanvasToImage(convertImageToCanvas(myImg.src)));
+                                setInterval(function(){ $('#ex1').zoom(); }, 1000);
+                            }
+                            else{
+                                //var imgScnrio = '<span class="zoom" id="ex1">';
+                                var imgScnrio = '<textarea style="width:100%;height:300px;" class="form-control" id="txtScenario"></textarea>';
+                                //imgScnrio += '</span>';
+                                $('#ImageScenario').append(imgScnrio);
+                                $('#txtScenario').html(data.d);
+                            }
+
+
+                        },
+                        error: function (data) {
+                            alert(data);
+                        }
+                    });
+                }
+
+            }
+        }
+    }
+
+    //code for timer count down
+    var hours = Math.floor( @ViewBag.Duration / 60);  ;
+    var minutes = @ViewBag.Duration % 60;;
+    var seconds = 0;
+    var SD;
+    function setCountDown() {
+        seconds--;
+        if (seconds < 0) {
+            minutes--;
+            seconds = 59;
+        }
+        if (minutes < 0) {
+            hours--;
+            minutes = 59;
+        }
+        if (hours < 0) {
+            hours = 23;
+        }
+        var h1 = hours; if (h1 == 0 || h1 < 10) { h1 = '0' + h1; }
+        var m1 = minutes; if (m1 == 0 || m1 < 10) { m1 = '0' + m1; }
+        var s1 = seconds; if (s1 == 0 || s1 < 10) { s1 = '0' + s1; }
+        document.getElementById("countdown").innerHTML = h1 + ":" + m1 + ":" + s1;
+        $('#progressbar1').progressbar('value', $('#progressbar1').progressbar('value') + 1);
+        SD = window.setTimeout("setCountDown()", 1000);
+        if ((h1 == '00' || h1 == '0') &  (m1 == '00' || m1 == '1'))
+        {
+            if ($("#countdown").css('color') == 'rgb(0, 0, 0)')
+                $("#countdown").css('color','red');
+            else
+                $("#countdown").css('color','black');
+        }
+        if ((s1 == '00' || s1 == '0') && (m1 == '00' || m1 == '0') && (h1 == '00' || h1 == '0')) {
+            //seconds = "00"; window.clearTimeout(SD);
+            //alert("You reached the time limit.");
+            clearTimeout(SD);
+            $("#modal-ExamTimedOut").modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            //document.getElementById("appear_exam").submit();
+            //window.location = "result.php"
+        }
+    }
+    //$(function () {
+    //    setCountDown();
+    //});
+    $(document).on("click", '#btnpausetest', function () {
+        clearTimeout(SD);
+    });
+    $(document).on("click", '#btnresumetest', function () {
+        setCountDown();
+    });
+
+    var pauseTime;
+    $(document).on("click", '#btnClearchoice', function () {
+        //    clearTimeout(SD);
+        //    pauseTime = new Date();
+        $('#lblChoice1').iCheck('uncheck');
+        $('#lblChoice2').iCheck('uncheck');
+        $('#lblChoice3').iCheck('uncheck');
+        $('#lblChoice4').iCheck('uncheck');
+        clearHighlightEliminator();
+    });
+    $(document).on("click", '#btnResumeExam', function () {
+        setCountDown();
+        var curTime = new Date();
+        var difference = curTime.getTime() - pauseTime.getTime(); // This will give difference in milliseconds
+        var resultInMinutes = Math.round(difference / 60000);
+
+
+    });
+    /////////////////////////////////////////////
+    function getDateFormat() {
+        var abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var chatmsg = "";
+        var myDate = new Date();
+        var sHour = myDate.getHours();
+
+        var sAMPM = "AM";
+
+        var iHourCheck = parseInt(sHour);
+
+        if (iHourCheck > 12) {
+            sAMPM = "PM";
+            sHour = iHourCheck - 12;
+        }
+        else if (iHourCheck === 0) {
+            sHour = "12";
+        }
+
+        var timeString = myDate.getDate() + ' ' + abbrMonths[(myDate.getMonth())] + ' ' + sHour + ':' + myDate.getMinutes() + " " + sAMPM;
+        return timeString;
+    }
+
+    $(document).on("click", "#btnBookmark", function () {
+        //$('#btnBookmark').toggle(
+        if ($('#btnBookmark').css('background-color') == "rgb(24, 64, 118)") {
+            $('#btnBookmark').css('background-color', "rgb(242, 178, 11)");
+        }
+        else{
+            $('#btnBookmark').css('background-color',"rgb(24, 64, 118)");
+        }
+        //);
+    });
+
+    $(document).on("click", "#sendChatMsg", function () {
+        var chatmsg = "";
+        if ($.trim($('#txtChatMsg').val()) != "") {
+            //sHour = padValue(sHour);
+            chatmsg += "<div class=\"direct-chat-msg right\">";
+            chatmsg += "<div class=\"direct-chat-info clearfix\" style=\"font-size: smaller;\">";
+            chatmsg += "<span class=\"direct-chat-name pull-right\">" + "@ViewBag.LoginID" + "</span>";
+            chatmsg += "<span class=\"direct-chat-timestamp pull-left\">" + getDateFormat() + "</span>";
+            chatmsg += "</div>";
+            chatmsg += "<div class=\"direct-chat-text\">";
+            chatmsg += $('#txtChatMsg').val();
+            chatmsg += "</div>";
+            chatmsg += "</div>";
+            $('.direct-chat-messages').append(chatmsg);
+            //sendIndMsgFromProctor($('#txtChatMsg').val());
+            hub.invoke("SendInvidualMsg", "@ViewBag.ExamScheduletitle", "@ViewBag.ProctorID",
+                "@ViewBag.LoginID", $('#txtChatMsg').val());
+            //$("#modal-chat").modal('toggle');
+
+            var ResponseDetails = JSON.stringify({
+                "Id":0,
+                "SessionId":"",
+                "MessageReferenceId":getUrlParameter('ExamScheduleID'),//(Examscheduleid)
+                "MessageLogTypeId":0,
+                "MessageFromId":"@ViewBag.ClientID",
+                "MessageFromName":"@System.Web.HttpContext.Current.Session["LoginName"]",
+                "MessageToId": "@ViewBag.ProctorGuid",
+                "MessageToName":"@ViewBag.ProctorID",
+                "MessageLogText":$('#txtChatMsg').val(),//Sent Message
+                "CreatedById":"5A5623E1-673D-4026-AC50-32A41977EB29"
+            });
+            $.ajax({
+                type: "POST",
+                url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/SaveMessageLog ',
+                data: ResponseDetails,
+                contentType: "application/json",
+                dataType: 'json',
+                async: false,
+                success: function (data, status, xhr) {
+                    //alert("The result is : " + status + ": " + data);
+                },
+                error: function (xhr) {
+                    alert("err: " + xhr.statusText);
+                }
+            });
+
+
+            $('#txtChatMsg').val("");
+        }
+    });
+
+
+    $(document).on("click", "#btnEndExam", function () {
+        var lstparam1 = "@ViewBag.ExamScheduletitle";
+
+        var lstparam2 = "@ViewBag.LoginID";
+        var lstparam3 = "@ViewBag.ProctorID";
+
+        var bkmcount = 0;
+        var anscount = 0;
+        for (var x=0; x<sessionStorage.length; x++)
+        {
+            var test =sessionStorage.key(x);
+            if (test.indexOf('BKM_') >=0 )
+            {
+                bkmcount +=1;
+                $('#anc1choice' + test.substring(4) + ' i').remove();
+                $('#anc1choice' + test.substring(4)).append('&nbsp;&nbsp;&nbsp;<i class="fa fa-fw fa-bookmark-o"></i>');
+            }
+            if (test.indexOf('ANS_') >= 0)
+                anscount += 1;
+
+        }
+        $('#btnEndExamNotAns').html(AQDatacount - anscount);
+        $('#btnEndExamBmkAns').html(bkmcount);
+
+    });
+
+    $(document).on("click", "#btnStartExam", function () {
+        @*hub.invoke("StartedExam", "@ViewData["AssessmentName"].ToString()", "@ViewBag.LoginID", "@ViewBag.ProctorID");
+        setCountDown();*@
+    });
+
+    $(document).on("click", "#btnReview", function () {
+        //$('#dialog-form').dialog("open");
+        //$("#dialog-form").show();
+        for (var x=0; x<sessionStorage.length; x++)
+        {
+            var test =sessionStorage.key(x);
+            if (test.indexOf('BKM_') >=0 )
+            {
+                $('#ancchoice' + test.substring(4) + ' i').remove();
+                $('#ancchoice' + test.substring(4)).append('&nbsp;&nbsp;&nbsp;<i class="fa fa-fw fa-bookmark-o"></i>');
+            }
+            if (test.indexOf('ANS_') >= 0)
+            {
+                //$('#choice' + test.substring(4)).iCheck('enable');
+                $('#choice' + test.substring(4)).iCheck('check');
+                //$('#choice' + test.substring(4)).iCheck('disable');
+            }
+        }
+    });
+
+    //proctor anchor clicked to expand password entry
+    $(document).on("click", "#ancProctor", function () {
+        //$('#ancProctor').click(function () {
+        $('#divProctor').show();
+        var lstparam1 = "@ViewBag.ExamScheduletitle";
+
+        var lstparam2 = "@ViewBag.LoginID";
+        var lstparam3 = "@ViewBag.ProctorID";
+
+        hub.invoke("ExtendExambyExaminee", lstparam1, lstparam2, lstparam3);
+    });
+
+    //display message that proctor extended exam time
+    hub.on('gotConfirmationExamExtend', function (extndMinutes) {
+        //alert('Proctor approved to extend exam time');
+        //$("#modal-ExamTimedOut").modal('toggle');
+        hours = Math.floor( (minutes + hours + extndMinutes) / 60);
+
+        minutes = Math.floor((minutes + hours + extndMinutes) % 60);
+    });
+
+    hub.on("ProctorEndExam", function (grpName, ProctorId) {
+        $("#modal-EndExam").modal();
+    });
+
+    hub.on('ProctorPausedExam', function(ProctorID){
+        clearTimeout(SD);
+        pauseTime = new Date();
+        $("#modal-PauseExam").modal('toggle');
+    });
+
+    hub.on('ClientMisconduct', function(ProctorID){
+        $("#modal-Misconduct").modal('toggle');
+    });
+
+    hub.on('OnExamineeDisconnected', function (grpName) {
+        //var rowno = 0; namerow = 0;
+        //$("#tblnmlist tr:gt(0)").each(function () {
+        //    var this_row = $(this);
+        //    var assname = $.trim(this_row.find('td:eq(1)').html())
+        //    //rowno++;
+
+        //    if (grpName === assname) {
+
+        //        $(this).find('#btnStartExam').prop('disabled', true);
+        //        $(this).find('#btnStartExam').prop("class", "btn btn-group-lg btn-primary");
+        //        //$(this).find('#btnPauseExam').prop('disabled', true);
+        //        //$(this).find('#btnPauseExam').prop("class", "btn btn-sm btn-primary")
+        //        //$(this).find('#btnEndExam').prop('disabled', true);
+        //        //$(this).find('#btnEndExam').prop("class", "btn btn-sm btn-primary")
+        //    }
+
+        //});
+        clearTimeout(SD);
+
+        $('#modal-ProctorDisconnected').modal({
+            backdrop: 'static',
+            keyboard: false
+        })
+    });
+
+    @*hub.on('StartExam', function (grpName, ProctorId) {
+        //var rowno = 0; namerow = 0;
+        //$("#tblnmlist tr:gt(0)").each(function () {
+        //    var this_row = $(this);
+        //    var assname = $.trim(this_row.find('td:eq(1)').html());
+        //    //rowno++;
+        //    var str = $.trim(this_row.find('td:eq(6)').text());
+        //    str = str.substring(str.lastIndexOf("[") + 1, str.lastIndexOf("]"));
+        //    if (grpName === assname && str === ProctorId) {
+
+        hub.invoke("StartedExam", "@ViewData["AssessmentName"].ToString()", "@ViewBag.LoginID", "@ViewBag.ProctorID");
+        $('#modal-StartExam').modal('toggle');
+        DisplayQuestion();
+        setCountDown();
+
+        //$('#btnStartExam').prop('disabled', false);
+        //$('#btnStartExam').prop("class", "btn btn-group-lg btn-primary");
+        //$(this).find('#btnPauseExam').prop('disabled', false);
+        //$(this).find('#btnPauseExam').prop("class", "btn btn-sm btn-primary")
+        //$(this).find('#btnEndExam').prop('disabled', false);
+        //$(this).find('#btnEndExam').prop("class", "btn btn-sm btn-primary")
+        //    }
+
+        //});
+    });*@
+
+    function onRaiseHand() {
+        hub.invoke("SendInvidualMsg", "@ViewBag.ExamScheduletitle", "@ViewBag.ProctorID",
+            "@ViewBag.LoginID", "@System.Web.HttpContext.Current.Session["LoginName"]" + " trying to reach you");
+        var ResponseDetails = JSON.stringify({
+            "Id":0,
+            "SessionId":"",
+            "MessageReferenceId":getUrlParameter('ExamScheduleID'),//(Examscheduleid)
+            "MessageLogTypeId":0,
+            "MessageFromId":"@ViewBag.ClientID",
+            "MessageFromName":"@System.Web.HttpContext.Current.Session["LoginName"]",
+            "MessageToId": "@ViewBag.ProctorGuid",
+            "MessageToName":"@ViewBag.ProctorID",
+            "MessageLogText":"@System.Web.HttpContext.Current.Session["LoginName"]" + " trying to reach you",//Sent Message
+            "CreatedById":"5A5623E1-673D-4026-AC50-32A41977EB29"
+        });
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/SaveMessageLog ',
+            data: ResponseDetails,
+            contentType: "application/json",
+            dataType: 'json',
+            async: false,
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+    };
+
+    hub.on("ProctorAcknowledge", function(){
+        $('#lblMessage').html("Instructor Alerted ...");
+    })
+    // Create a function that the hub can call to broadcast messages.
+    hub.on('broadcastMessage', function (message, formid) {
+        // Html encode display name and message.
+        var encodedMsg = $('<div />').text(message).html();
+        // Add the message to the page.
+        var chatmsg = "";
+        //sHour = padValue(sHour);
+        chatmsg += "<div class=\"direct-chat-msg\">";
+        chatmsg += "<div class=\"direct-chat-info clearfix\" style=\"font-size: smaller;\">";
+        chatmsg += "<span class=\"direct-chat-name pull-left\">Proctor</span>";
+        chatmsg += "<span class=\"direct-chat-timestamp pull-right\">" + getDateFormat() + "</span>";
+        chatmsg += "</div>";
+        chatmsg += "<div class=\"direct-chat-text\">";
+        chatmsg += encodedMsg;
+        chatmsg += "</div>";
+        chatmsg += "</div>";
+        $('.direct-chat-messages').append(chatmsg);
+        $("#modal-chat").modal();
+        $('#lblMessage').html('');
+
+    });
+
+    $(document).on("click", '#btnRevAllQns', function (e) {
+        $("#lstReviewQns").empty();
+
+        var liItems = "";
+        var abc = @Html.Raw(Json.Encode(Model));
+        for(var i=0;i<abc.length; i++)
+        {
+            liItems += '<li style="padding-left:5px">';
+            liItems += '<a href="#" id="anc1choice' + abc[i].Text + '" onclick="DisplayRevSelQuestion(' + abc[i].Text + ', ' + abc[i].SNo + ', 0)"><label for="operator(' + abc[i].SNo + ')">' + abc[i].Text + '</label></a>';
+            liItems += '</li>';
+        }
+        $("#lstReviewQns").append(liItems);
+        $("#lstReviewQns").css('display','block');
+
+        $("#lstReviewBtn").css('display','block');
+    });
+
+    $(document).on("click", '#btnRevNotAnsQns', function (e) {
+        $("#lstReviewQns").empty();
+
+        var liItems = "";
+        var abc = @Html.Raw(Json.Encode(Model));
+        for (var x=0; x<abc.length; x++)
+        {
+            var abc1 = sessionStorage.getItem('ANS_' + abc[x].Text);
+
+            if (abc1 == null )
+            {
+                liItems += '<li style="padding-left:5px">';
+                liItems += '<a href="#" id="anc1choice' + abc[x].Text + '" onclick="DisplayRevSelQuestion(' + abc[x].Text + ', ' + abc[x].SNo + ', 0)"><label for="operator(' + abc[x].SNo + ')">' + abc[x].Text + '</label></a>';
+                liItems += '</li>';
+            }
+        }
+        $("#lstReviewQns").append(liItems);
+        $("#lstReviewQns").css('display','block');
+
+        $("#lstReviewBtn").css('display','block');
+    });
+
+    //$('.keep-inside-clicks-open').on("hide.bs.dropdown", function (e) {
+    //    e.stopPropagation();
+    //    e.preventDefault();
+    //});
+
+    function unlock() {
+        //alert('resumenext');
+        try {
+
+            //var mp = cordova.require("com-plugin-examineeplugin-cam.hello");
+            //if (mp) {
+            //    //alert("In webapp: AmILate plugin Found !");
+            //}
+            //else {
+            //    alert("UnLoack screen plugin NOT Found !");
+            //}
+            //var win = function (echo) { alert(echo); }
+            //var fail = function () { alert('fail!'); }
+            //mp.ReleaseLock('Your screen got unlocked', win, fail);
+        }
+        catch (err) {
+            alert(err)
+        }
+        //});
+    }
+
+    $(document).on("click", '#btnProctorDisconnected', function (e) {
+        unlock();
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+    });
+
+    $(document).on("click", '#btnMisconductEndExam', function (e) {
+        unlock();
+        @*if (@ViewBag.ExamineeType==1)*@
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+        @*if (@ViewBag.ExamineeType==2){
+        var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+        location.href = link1;*@
+        //}
+    });
+
+    $(document).on("click", '#btnSubmitRetDashb', function (e) {
+        var lstparam1 = "@ViewBag.ExamScheduletitle";
+
+        var lstparam2 = "@ViewBag.LoginID";
+        var lstparam3 = "@ViewBag.ProctorID";
+        hub.invoke("EndedExam", lstparam1, lstparam2, lstparam3);
+        unlock();
+        @*if (@ViewBag.ExamineeType==1)*@
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+        @*if (@ViewBag.ExamineeType==2){
+        var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+            location.href = link1;*@
+        //}
+        //window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid");
+
+        var ResponseDetails = JSON.stringify({
+            "ExamineeSessionId": @ViewBag.ExamineeSessionId,
+            //"statusid":4,
+            //"LastModifiedById": '@System.Web.HttpContext.Current.Session["LoginGuid"]'
+            "CreatedById": "@System.Web.HttpContext.Current.Session["LoginGuid"].ToString()",
+            "CreatedByIp": '',
+        });
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/exam/examinee/endexam ',
+            data: ResponseDetails,
+            contentType: "application/json",
+            dataType: 'json',
+            async: false,
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+                // hub.invoke(ExamScheduleStatusIdChanged,procID ,$('#' + $id + ' #hdnexschid').val(),);
+                var exSchId = getUrlParameter('ExamScheduleID');
+                hub.invoke('ExamScheduleStatusIdChanged',"ProctorDashboard" , exSchId,4);
+
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+
+
+    });
+    $(document).on("click", '#btnExamCancel', function (e) {
+        unlock();
+        @*if (@ViewBag.ExamineeType==1)*@
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+        @*if (@ViewBag.ExamineeType==2){
+        var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+        location.href = link1;*@
+        //}
+        //window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid");
+    });
+    $(document).on("click", '#btnRevBkmarksQns', function (e) {
+        $("#lstReviewQns").empty();
+        var liItems = "";
+        for (var x=0; x<sessionStorage.length; x++)
+        {
+            var test =sessionStorage.key(x);
+            if (test.indexOf('BKM_') >=0 )
+            {
+                var abc = @Html.Raw(Json.Encode(Model));
+                var abc1 = $.grep(abc, function(p){return p.Text == test.substring(4)});
+                liItems += '<li style="padding-left:5px">';
+                liItems += '<a href="#" id="anc1choice' + abc1[0].Text + '" onclick="DisplayRevSelQuestion(' + abc1[0].Text + ', ' + abc1[0].SNo + ', 0)"><label for="operator(' + abc1[0].SNo + ')">' + abc1[0].Text + '</label></a>';
+                liItems += '</li>';
+            }
+        }
+        $("#lstReviewQns").append(liItems);
+        //$('#btnRevToggle').toggleClass('open');
+        $("#lstReviewQns").css('display','block');
+
+        $("#lstReviewBtn").css('display','block');
+    });
+
+    function clearHighlightEliminator()
+    {
+        if ($('#divChoice1').css('display') == 'none') {
+            $("#divChoice1").show();
+            $("#icnChoice1").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice1").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        }
+        if ($('#divChoice2').css('display') == 'none') {
+            $("#divChoice2").show();
+            $("#icnChoice2").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice2").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        }
+        if ($('#divChoice3').css('display') == 'none') {
+            $("#divChoice3").show();
+            $("#icnChoice3").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice3").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        }
+        if ($('#divChoice4').css('display') == 'none') {
+            $("#divChoice4").show();
+            $("#icnChoice4").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice4").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        }
+
+    }
+    //increment slider valie onclick of next button
+    //$('#btnNextQtn').click(function () {
+    $(document).on("click", '#btnNextQtn', function () {
+        QCount = QCount + 1;
+        clearHighlightEliminator();
+        setQuestionResponse();
+        //var incrval = $('#progressbar').progressbar("value");
+        if (QCount >= AQDatacount) {
+            //$('#pblabel').html(incrval + "/" + $('#progressbar').progressbar("option", "max"));
+            var bkmcount = 0;
+            var anscount = 0;
+            for (var x=0; x<sessionStorage.length; x++)
+            {
+                var test =sessionStorage.key(x);
+                if (test.indexOf('BKM_') >=0 )
+                {
+                    bkmcount +=1;
+                    $('#anc1choice' + test.substring(4) + ' i').remove();
+                    $('#anc1choice' + test.substring(4)).append('&nbsp;&nbsp;&nbsp;<i class="fa fa-fw fa-bookmark-o"></i>');
+                }
+                if (test.indexOf('ANS_') >= 0)
+                    anscount += 1;
+
+            }
+            $('#btnEndExamNotAns').html(AQDatacount - anscount);
+            $('#btnEndExamBmkAns').html(bkmcount);
+            $("#modal-EndExam").modal();
+            QCount = QCount - 1;
+        }
+        else
+            DisplayQuestion();
+
+        //incrval = incrval + 1;
+        $('#pblabel').html( AnsQuestionCount() + "/" + $('#progressbar').progressbar("option", "max"));
+        hub.invoke("callAnsweredQuestionsStatus", "@ViewBag.ExamScheduletitle", "@ViewBag.LoginID", "@ViewBag.ProctorID", AnsQuestionCount() ,$('#progressbar').progressbar("option", "max"));
+        $('#progressbar').progressbar('value', AnsQuestionCount());
+        //}
+
+    });
+
+    $(document).on("click", '#btnTimerExp', function () {
+        @*var link1 = '@Url.Action("Examinee", "Home", new { eid = "-4" })';
+        link1 = link1.replace("-4", "@ViewBag.eid")
+        location.href = link1;*@
+        @*if (@ViewBag.ExamineeType==1)*@
+        //window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+        @*if (@ViewBag.ExamineeType==2){*@
+        @*var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+        location.href = link1;*@
+        //}
+
+        var lstparam1 = "@ViewBag.ExamScheduletitle";
+
+        var lstparam2 = "@ViewBag.LoginID";
+        var lstparam3 = "@ViewBag.ProctorID";
+        hub.invoke("EndedExam", lstparam1, lstparam2, lstparam3);
+        unlock();
+        @*if (@ViewBag.ExamineeType==1)*@
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid" + "&examineetype=1");
+        @*if (@ViewBag.ExamineeType==2){
+            var link1 = '@Html.Raw(Url.Action("LoginExaminee", "Home"))';
+            location.href = link1;*@
+        //}
+        //window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@ViewBag.eid");
+
+        var ResponseDetails = JSON.stringify({
+            "ExamineeSessionId": @ViewBag.sessionid,
+            "statusid":4,
+            "LastModifiedById": '@System.Web.HttpContext.Current.Session["LoginGuid"]'
+        });
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/examinee/startExamineeExam',
+            data: ResponseDetails,
+            contentType: "application/json",
+            dataType: 'json',
+            async: false,
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+                var exSchId = getUrlParameter('ExamScheduleID');
+                hub.invoke('ExamScheduleStatusIdChanged',"ProctorDashboard" , exSchId,4);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+
+    });
+
+    $(document).on("click", '#btnPrevQtn', function () {
+        clearHighlightEliminator();
+        if (QCount < AQDatacount && QCount > 0) {
+            QCount = QCount - 1;
+            DisplayQuestion();
+        }
+        //var incrval = $('#progressbar').progressbar("value");
+        //if (QCount <= AQDatacount) {
+
+        //incrval = incrval -1;
+        $('#pblabel').html( AnsQuestionCount() + "/" + $('#progressbar').progressbar("option", "max"));
+        $('#progressbar').progressbar('value', AnsQuestionCount());
+        //}
+    });
+    $(document).on("click", '#btnRevToggle', function (e) {
+        $("#lstReviewQns").toggle('display');
+        $("#lstReviewBtn").toggle('display');
+        $('#btnRevAllQns').html(AQDatacount);
+        var bkmcount = 0;
+        var anscount = 0;
+        for (var x=0; x<sessionStorage.length; x++)
+        {
+            var test =sessionStorage.key(x);
+            if (test.indexOf('BKM_') >=0 )
+            {
+                bkmcount +=1;
+                $('#anc1choice' + test.substring(4) + ' i').remove();
+                $('#anc1choice' + test.substring(4)).append('&nbsp;&nbsp;&nbsp;<i class="fa fa-fw fa-bookmark-o"></i>');
+            }
+            if (test.indexOf('ANS_') >= 0)
+                anscount += 1;
+
+        }
+        $('#btnRevNotAnsQns').html(AQDatacount - anscount);
+        $('#btnRevBkmarksQns').html(bkmcount);
+
+        e.stopPropagation();
+    });
+    //  masking or hiding choices
+    $(document).on("click", '#btnChoice1', function () {
+        if ($('#divChoice1').css('display') != 'none') {
+            $('#divChoice1').toggle();
+            $("#icnChoice1").removeClass('fa fa-fw fa-eye').addClass('fa fa-fw fa-eye-slash');;
+            $("#divMnChoice1").removeClass('col-xs-9 border-right').addClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient');
+        }
+        else {
+            $("#divChoice1").toggle();
+            $("#icnChoice1").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice1").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        };
+    });
+    $(document).on("click", '#btnChoice2', function () {
+        if ($('#divChoice2').css('display') != 'none') {
+            $('#divChoice2').toggle();
+            $("#icnChoice2").removeClass('fa fa-fw fa-eye').addClass('fa fa-fw fa-eye-slash');;
+            $("#divMnChoice2").removeClass('col-xs-9 border-right').addClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient');
+        }
+        else {
+            $("#divChoice2").toggle();
+            $("#icnChoice2").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice2").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        };
+    });
+    $(document).on("click", '#btnChoice3', function () {
+        if ($('#divChoice3').css('display') != 'none') {
+            $('#divChoice3').toggle();
+            $("#icnChoice3").removeClass('fa fa-fw fa-eye').addClass('fa fa-fw fa-eye-slash');;
+            $("#divMnChoice3").removeClass('col-xs-9 border-right').addClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient');
+
+        }
+        else {
+            $("#divChoice3").toggle();
+            $("#icnChoice3").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice3").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        };
+    });
+    $(document).on("click", '#btnChoice4', function () {
+        var el = this
+        if ($('#divChoice4').css('display') == 'none') {
+            $("#divChoice4").show();
+            $("#icnChoice4").removeClass('fa fa-fw fa-eye-slash').addClass('fa fa-fw fa-eye');;
+            $("#divMnChoice4").removeClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient').addClass('col-xs-9 border-right');
+        }
+        else {
+            $('#divChoice4').hide();
+            $("#icnChoice4").removeClass('fa fa-fw fa-eye').addClass('fa fa-fw fa-eye-slash');;
+            $("#divMnChoice4").removeClass('col-xs-9 border-right').addClass('col-xs-9 border-right glyphicon-text-background bg-yellow-gradient');
+        };
+    });
+    //////////////////////////////////////
+
+    $( function() {
+        //$( "input[type='radio']" ).checkboxradio({
+        //    icon: true
+        //});
+        //$("#lblChoice1").button();
+        //$("#lblChoice2").checkboxradio();
+        //$("#lblChoice3").checkboxradio();
+        //$("#lblChoice4").checkboxradio();
+    } );
+
+    function SaveInfo() { }
+    $(document).ready(function () {
+
+        $('#ex1').zoom();
+        //$("#dialog-form").hide();
+        $("#lblChoice1").iCheck({
+            checkboxClass: 'icheckbox_minimal',
+            radioClass: 'icheckbox_flat-blue'
+        });
+        $("#lblChoice2").iCheck({
+            checkboxClass: 'icheckbox_minimal',
+            radioClass: 'icheckbox_flat-blue'
+        });
+        $("#lblChoice3").iCheck({
+            checkboxClass: 'icheckbox_minimal',
+            radioClass: 'icheckbox_flat-blue'
+        });
+        $("#lblChoice4").iCheck({
+            checkboxClass: 'icheckbox_minimal',
+            radioClass: 'icheckbox_flat-blue'
+        });
+        $("#lblChoice5").iCheck({
+            checkboxClass: 'icheckbox_minimal',
+            radioClass: 'icheckbox_flat-blue'
+        });
+        //con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] });
+        //var preview = getUrlParameter('preview');
+        //if (preview != 1){
+        //    $('#modal-StartExam').modal({
+        //        backdrop: 'static',
+        //        keyboard: false
+        //    });
+        //}
+        //if (preview == 1)
+        $('.content-header').hide();
+        $('#divProctor').hide();
+        sessionStorage.clear();
+
+        RestoreAnsQtns();
+        RestoreBMQtns();
+
+        if (AQData != "") {
+            $("#progressbar").progressbar({
+                min: 1,
+                max: AQDatacount,
+                step: 1
+            }).addClass("beginning");;
+        }
+
+        $("#progressbar1").progressbar({
+            min: 1,
+            max: (hours * 3600) + (60 * minutes) + seconds,
+            step: 1
+        }).addClass("beginning");
+
+        DisplayQuestion();
+        setCountDown();
+        //DisplayQuestion();
+        $('#pblabel').html( AnsQuestionCount() + "/" + $('#progressbar').progressbar("option", "max"));
+        $('#progressbar').progressbar('value', AnsQuestionCount());
+
+        $('.messages-menu').hide();
+        $('.notifications-menu').hide();
+        $('.tasks-menu').hide();
+        $('.dropdown-toggle').prop("disabled", "disabled");
+
+    });
+    function AnsQuestionCount(){
+        var anscount = 0;
+        for (var x=0; x<sessionStorage.length; x++)
+        {
+            var test =sessionStorage.key(x);
+            if (test.indexOf('ANS_') >= 0  && sessionStorage.getItem(test) > 0)
+                anscount += 1;
+        }
+        return anscount;
+    }
+
+    function RestoreAnsQtns(){
+        var ansArray = "@ViewBag.ansQtns";
+        if (ansArray != ""){
+            var array = ansArray.split("|");
+            $.each(array,function(i){
+                var array2 = array[i].split(":");
+                if (array2[1] > 0)
+                    sessionStorage.setItem('ANS_' + array2[0], array2[1]);
+            });
+        }
+    }
+
+    function RestoreBMQtns(){
+        var ansArray = "@ViewBag.BMQtns";
+        if (ansArray != ""){
+            var array = ansArray.split("|");
+            $.each(array,function(i){
+                //var array2 = array[i].split(":");
+                if (array[i] > 0)
+                    sessionStorage.setItem('BKM_' + array[i], 1);
+            });
+        }
+    }
+
+    //triggered when closibng the window/tab
+    //$(window).bind("beforeunload", function() {
+    //    return confirm("Do you really want to close?");
+    //})
+
+    $(document).on("click", '#myImgBtn', function () {
+        // Get the modal
+        var modal = document.getElementById('myModal');
+
+        // Get the image and insert it inside the modal - use its "alt" text as a caption
+        var img = document.getElementById('QuestionImage');
+        var modalImg = document.getElementById("img01");
+        var captionText = document.getElementById("caption");
+
+        modal.style.display = "block";
+        modalImg.src = img.src;
+        captionText.innerHTML = img.alt;
+
+        //// Get the <span> element that closes the modal
+        //var span = document.getElementsByClassName("close")[0];
+
+        //// When the user clicks on <span> (x), close the modal
+        //span.onclick = function() {
+        //    modal.style.display = "none";
+        //}
+
+    });
+
+    $(document).on("click", '#spnclose', function () {
+        var modal = document.getElementById('myModal');
+        modal.style.display = "none";
+    });
+
+</script>
+<style>
+    .reded {
+        color: red;
+    }
+
+    /* styles unrelated to zoom */
+    /** {
+        border: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    p {
+        position: absolute;
+        top: 3px;
+        right: 28px;
+        color: #555;
+        font: bold 13px/1 sans-serif;
+    }*/
+
+    /* these styles are for the demo, but are not required for the plugin */
+
+    .zoomImg {
+        cursor: crosshair;
+    }
+
+    section {
+        margin: 0px 0px 0px 0px;
+        padding: 0px 0px 0px 0px;
+    }
+
+    .zoom {
+        display: inline-block;
+        position: relative;
+    }
+
+        /* magnifying glass icon */
+        .zoom:after {
+            content: '';
+            display: block;
+            width: 33px;
+            height: 33px;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: url('~/Images/icon.png');
+        }
+
+        .zoom img {
+            display: block;
+        }
+
+            .zoom img::selection {
+                background-color: transparent;
+            }
+
+    /* circle with text */
+    .circle {
+        width: 75px;
+        height: 75px;
+        border-radius: 75px;
+        color: black;
+        line-height: 75px;
+        text-align: center;
+        background: orange;
+    }
+
+    /* for bookmark */
+    *, *:before, *:after {
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+    }
+
+    .bookmark {
+        position: relative;
+        height: 70px;
+        width: 50px;
+        padding: 0px;
+        -webkit-transform: rotate(0deg) skew(0deg);
+        transform: rotate(0deg) skew(0deg);
+        border-left: 25px solid rgb(24,64,118);
+        border-right: 25px solid rgb(24,64,118);
+        border-bottom: 25px solid transparent;
+        color: white;
+        align-content: center;
+    }
+
+
+    /* progress bar for question*/
+    #progressbar, #progressbar1, #pbar {
+        width: 100%;
+        text-align: center;
+        background-color: #8ea5d0;
+        color: white;
+    }
+
+        #pbar .ui-progressbar-value {
+            display: block !important;
+            background: rgb(24,64,118);
+        }
+
+    .ui-progressbar.beginning .ui-progressbar-value {
+        background: rgb(24,64,118);
+    }
+
+    /*general div settings*/
+    div {
+        padding: 0px;
+        margin: 0px;
+        /*border:solid;*/
+        background: linear-gradient();
+    }
+
+    ul.checkbox {
+        margin: 0;
+        padding: 0;
+        margin-left: 20px;
+        list-style: none;
+    }
+
+        ul.checkbox li input {
+            margin-right: .25em;
+        }
+
+        ul.checkbox li {
+            border: 1px transparent solid;
+            display: inline-block;
+            width: 12em;
+        }
+
+            ul.checkbox li label {
+                margin-left: 0px;
+            }
+
+            ul.checkbox li:hover,
+            ul.checkbox li.focus {
+                background-color: lightyellow;
+                border: 1px gray solid;
+                width: 12em;
+            }
+</style>
+<canvas id="canvas" hidden style="width:100%;height:100%; border:1px solid #d3d3d3;"></canvas>
+@*<button id="btnpausetest" class="btn btn-primary">pause</button>
+    <button id="btnresumetest" class="btn btn-primary">resume</button>*@
+
+
+<!-- The Modal -->
+<div id="myModal" class="Imgmodal">
+
+    <!-- The Close Button -->
+    <span class="imgclose" id="spnclose">&times;</span>
+
+    <!-- Modal Content (The Image) -->
+    <img class="Imgmodal-content" id="img01">
+
+    <!-- Modal Caption (Image Text) -->
+    <div id="caption"></div>
+</div>
+
+<div class="row" @*ng-app="appExaminee" ng-controller="ctrlExamniee"*@>
+    @* dialog for Answered and UnAnswered questions Review *@
+    <div class="modal fade" id="modal-Review">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">Exam Question Review</h4>
+                </div>
+                <div class="modal-body">
+                    @using (Html.BeginForm())
+                    {
+                        <ul class="checkbox">
+                            @foreach (var choice in Model)
+                            {
+                                <li>
+                                    <input class="checkbox" id="choice@(choice.Text)"
+                                           type="checkbox"
+                                           name="SelectedChoices"
+                                           value="@choice.SNo"
+                                           @(Convert.ToBoolean(choice.QAns) == true ? "checked='checked'" : string.Empty) />
+
+                                    <a href="#" id="ancchoice@(choice.Text)" onclick="DisplayRevSelQuestion(@choice.Text, @choice.SNo,1)"><label for="operator@(choice.SNo)">@choice.Text</label></a>
+                                </li>
+                            }
+                        </ul>
+
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog displayed at the end of exam or click of Next button on last question *@
+    <div class="modal fade" id="modal-EndExam">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">Exam Finished</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <h4 id="endExamHeader">End of exam: </h4>
+                            Click on 'Return to Exam' button to go back and review your responses. If you are done, click on  'Submit Final Answers' button to submit your responses and return to Dashboard.
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6" style="padding-top:10px">
+                            <div style="float:right">
+                                <div class="circle" id="btnEndExamNotAns">20</div>
+                                Not Answered
+                            </div>
+                        </div>
+                        <div class="col-md-6" style="padding-top:15px">
+                            <div style="float:left;">
+                                <div class="bookmark" id="btnEndExamBmkAns" style="align-items: center;display:flex;">25</div>
+                                Bookmarked
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Return to Exam</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitRetDashb">Submit Final Answers</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog displayed when exam timed out *@
+    <div class="modal fade" id="modal-ExamTimedOut">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">Time Expired</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <h4>
+                                Your responses have been submitted automatically, click OK to return to the dashboard.
+                            </h4>
+                            @*Select "Submit Final Answers" now. you will not able to return to this test.*@
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-primary" id="btnTimerExp" data-dismiss="modal" style="width:110px">OK</button>
+                        </div>
+                        <div class="col-md-12">
+                            <br />
+                            <br />
+                            <a href="#" id="ancProctor" title="Request extra time">Proctor</a>
+                            <br />
+                            <br />
+                        </div>
+                    </div>
+
+                    <div class="row" id="divProctor">
+                        <div class="col-md-12">
+                            <div class="col-md-7">
+                                Enter password for extended testing time
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Continue</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog on exam start *@
+    @*<div class="modal fade" id="modal-StartExam">
+            <div class="modal-dialog" style="margin-top:200px">
+                <div class="modal-content">
+                    <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                        <h4 class="modal-title">eTesting Client</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12" style="text-align:center">
+                                <br />
+                                <br />
+                                <br />
+                                <h4>
+                                    Please wait for the instructor to start the exam. <br />Waiting for everyone to join the exam...
+                                </h4>
+                                <br />
+                                <br />
+                                <br />
+                                <button type="button" class="btn btn-default" id="btnExamCancel" data-dismiss="modal" style="width:110px">Cancel</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>*@
+    @*******************************************************@
+
+    @* dialog on exam start *@
+    <div class="modal fade" id="modal-ProctorDisconnected">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">eTesting</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <br />
+                            <br />
+                            <br />
+                            <h4>
+                                Instructor got disconnected abruptly. Please wait for the instructor to reconnect the exam ....
+                            </h4>
+                            @*Select "Submit Final Answers" now. you will not able to return to this test.*@
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-primary" id="btnProctorDisconnected" data-dismiss="modal" style="width:110px">Close</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog on exam start *@
+    <div class="modal fade" id="modal-PauseExam">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">eTesting</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <br />
+                            <br />
+                            <br />
+                            <h4>
+                                Instructor paused exam. Click on 'Continue' to resume exam ....
+                            </h4>
+                            @*Select "Submit Final Answers" now. you will not able to return to this test.*@
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-default" id="btnResumeExam" data-dismiss="modal" style="width:110px">Continue</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog on exam start *@
+    <div class="modal fade" id="modal-Misconduct">
+        <div class="modal-dialog" style="margin-top:200px">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>*@
+                    <h4 class="modal-title">eTesting</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <br />
+                            <br />
+                            <br />
+                            <h4>
+                                Instructor ended exam on Irregularity behaviour....
+                            </h4>
+                            @*Select "Submit Final Answers" now. you will not able to return to this test.*@
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-default" id="btnMisconductEndExam" data-dismiss="modal" style="width:110px">End Exam</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    @* dialog for instructions *@
+    <div class="modal fade" id="modal-Instructions">
+        <div class="modal-dialog" style="width:700px;">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    <h4 class="modal-title">Instructions</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12" style="text-align:center">
+                            <img src="~/Images/Exam_Instructions.JPG" />
+                            <button type="button" class="btn btn-primary" data-dismiss="modal" style="width:110px">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+
+    @* dialog for Chat with proctor *@
+    <div class="modal fade" id="modal-chat">
+        <div class="modal-dialog" style="width:300px">
+            <div class="modal-content small">
+                <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">Message from Proctor</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="box box-primary direct-chat direct-chat-primary">
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <!-- Conversations are loaded here -->
+                            <div class="direct-chat-messages">
+                                <!-- Message. Default to the left -->
+                                <!-- /.direct-chat-msg -->
+                                <!-- /.direct-chat-msg -->
+                            </div>
+                            <!--/.direct-chat-messages-->
+                            <!-- Contacts are loaded here -->
+                            <!-- /.direct-chat-pane -->
+                        </div>
+                        <!-- /.box-body -->
+                        <div class="box-footer">
+                            <div class="input-group">
+                                <input type="text" name="message" placeholder="Type Message ..." class="form-control" id="txtChatMsg" style="font-size:small">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-danger btn-flat" id="sendChatMsg" style="font-size:small">Send</button>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- /.box-footer-->
+                    </div>
+                </div>
+                @*<div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>*@
+            </div>
+        </div>
+    </div>
+    @*******************************************************@
+
+    <div class="col-xs-12 col-md-12">
+        @*<div class="box-header with-border">
+                <h3 class="box-title">Screens</h3>
+            </div>*@
+        <div class="box-footer">
+            <!--Examinee list -->
+            <div class="row" style="padding-left:10px;">
+
+                <div class="form-group">
+                    <div class="col-xs-1" style="vertical-align: middle;padding-top:10px;width:120px">
+                        <button type="button" class="btn btn-group-lg btn-primary" id="btnPrevQtn" style="width:110px">
+                            << Previous
+                        </button>
+                    </div>
+                    <div class="col-xs-1" style="vertical-align: middle;padding-top:10px;width:120px">
+                        <button type="button" class="btn btn-primary" id="btnNextQtn" style="width:110px">
+                            Next >>
+                        </button>
+                    </div>
+                    <div class="col-xs-1 btn-group" style="vertical-align: middle;padding-top:10px;width:150px">
+                        <button type="button" class="btn btn-group-lg btn-primary"
+                                id="btnReview" data-toggle="modal" data-target="#modal-Review" style="width:80px">
+                            Review
+                        </button>
+                        <div class="keep-inside-clicks-open">
+                            <button class="btn btn-primary" type="button" data-toggle="dropdown" id='btnRevToggle'>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" id="lstReviewQns" style="height:500px;overflow:scroll">
+
+                                @foreach (var choice in Model)
+                                {
+                                    <li style="padding-left:5px">
+                                        <a href="#" id="anc1choice@(choice.Text)" onclick="DisplayRevSelQuestion(@choice.Text, @choice.SNo, 0)">
+                                            <label for="operator@(choice.SNo)">@choice.Text</label>
+                                        </a>
+                                    </li>
+                                }
+
+                            </ul>
+
+                            <ul class="dropdown-menu" id="lstReviewBtn" role="menu" style="top:525px">
+                                <li>
+                                    <table>
+                                        <tr>
+                                            <td align="center" width="30%"><button type="button" id="btnRevAllQns" class="btn btn-default">30</button></td>
+                                            <td align="center" width="30%"><button type="button" id="btnRevNotAnsQns" class="btn btn-default">1</button></td>
+                                            <td align="center" width="30%"><button type="button" id="btnRevBkmarksQns" class="btn btn-default">1</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td width="30%" style="font-size:xx-small;text-align:center">All Questions</td>
+                                            <td width="30%" style="font-size:xx-small;text-align:center">Not Answered</td>
+                                            <td width="30%" style="font-size:xx-small;text-align:center">Bookmarks</td>
+                                        </tr>
+                                    </table>
+                                </li>
+                            </ul>
+
+                        </div>
+                    </div>
+                    <div class="col-xs-1" style="vertical-align: middle;padding-top:10px;width:135px">
+                        <button type="button" class="btn btn-group-lg btn-primary" id="btnBookmark" style="width:120px">
+                            <i class="fa fa-fw fa-bookmark-o"></i> Bookmark
+                        </button>
+                    </div>
+                    <div class="col-xs-1" style="vertical-align: middle;padding-top:10px;width:130px">
+                        <button type="button" class="btn btn-primary" id="btnEndExam"
+                                data-toggle="modal" data-target="#modal-EndExam" style="width:110px">
+                            End
+                        </button>
+                    </div>
+
+                    <div class="col-xs-1" style="width:150px">
+                        <p style="font-size:x-small">
+                            Remaining time:
+                            <span id="countdown" class="timer" style="font-size:x-large; color:black"></span>
+                        </p>
+                    </div>
+                    <div class="col-xs-1" style="padding-top:15px">
+                        <a href="#" title="Exam Instruction" onclick="$('#modal-Instructions').modal();">Instructions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="box box-default">
+            <!--Examinee list -->
+            <div class="row" style="padding-left:10px;font-weight:lighter;font-size:small">
+
+                <div class="form-group">
+
+                    <div class="col-xs-2 border-right" style="width:120px">
+                        <label>Exam Title:</label>
+                    </div>
+                    <div class="col-xs-5 border-right">
+                        <label id="lblExamTitle"></label>
+                    </div>
+                    <div class="col-xs-1 border-right" style="width:50px">
+                        <label>Part:</label>
+                    </div>
+                    <div class="col-xs-2 border-right">
+                        <label id="lblExamPart">Part I Closed book</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class=" box box-default">
+            <div class="row" style="padding-left:10px;padding-top:10px;padding-bottom:20px">
+                <div class="form-group">
+                    <div class="col-xs-2" style="width:140px">
+                        <label>Question No:</label>
+                    </div>
+                    <div class="col-xs-1" style="width:150px">
+                        <label id="lblQuestionNo" style="font-weight:normal;text-align:left"></label>
+                    </div>
+                    <div class="col-xs-1" style="width:70px">
+                        <label>Section:</label>
+                    </div>
+                    <div class="col-xs-1">
+                        <label id="lblSectionNo" style="font-weight:normal;text-align:left"></label>
+                    </div>
+                    <div class="col-xs-1" style="width:80px">
+                        <label>Subject:</label>
+                    </div>
+                    <div class="col-xs-6">
+                        <label id="lblSubjectTitle" style="font-weight:normal;text-align:left"></label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12 col-xs-8 ">
+                    @*<div class="box-footer">*@
+                    <div class="row" style="padding-left:10px;padding-bottom:20px">
+                        <div class="form-group">
+                            <div class="col-xs-2 border-right" >
+                                <label>Question:</label>
+                            </div>
+                            <div class="col-xs-10 border-right" >
+                                <label id="lblQuestion" style="font-weight:normal"></label>
+                            </div>
+                        </div>
+                    </div>
+                    @*</div>*@
+                    @*<div class="box-footer">*@
+                    <div class="row" style="padding-left:10px;padding-bottom:5px">
+                        <div class="form-group">
+                            <div class="col-xs-2 border-right">
+                                <label>Choice A:</label>
+                            </div>
+                            <div class="col-xs-9 border-right" id="divMnChoice1">
+                                <div id="divChoice1">
+
+                                    <input type="radio" id="lblChoice1" name="rdChoice" class="icheckbox_flat-blue" style="display:inline;font-weight:normal" /><label for="lblChoice1" style="font-weight:normal;padding-left:10px"></label>
+                                </div>
+                            </div>
+                            <div class="col-xs-1 border-right">
+                                <button type="button" class="btn btn-group-lg" id="btnChoice1" style="width:50px;height:30px">
+                                    <i class="fa fa-fw fa-eye" id="icnChoice1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @*</div>
+                        <div class="box-footer">*@
+                    <div class="row" style="padding-left:10px;padding-bottom:5px">
+                        <div class="form-group">
+                            <div class="col-xs-2 border-right">
+                                <label>Choice B:</label>
+                            </div>
+                            <div class="col-xs-9 border-right" id="divMnChoice2">
+                                <div id="divChoice2">
+                                    <input type="radio" id="lblChoice2" name="rdChoice" class="icheckbox_flat-blue" style="display:inline;font-weight:normal" /><label for="lblChoice2" style="display:inline;font-weight:normal;padding-left:10px"></label>
+                                </div>
+                            </div>
+                            <div class="col-xs-1 border-right">
+                                <button type="button" class="btn btn-group-lg" id="btnChoice2" style="width:50px;height:30px">
+                                    <i class="fa fa-fw fa-eye" id="icnChoice2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @*</div>
+                        <div class="box-footer">*@
+                    <div class="row" style="padding-left:10px;padding-bottom:5px">
+                        <div class="form-group">
+                            <div class="col-xs-2 border-right">
+                                <label>Choice C:</label>
+                            </div>
+                            <div class="col-xs-9 border-right" id="divMnChoice3">
+                                <div id="divChoice3">
+                                    <input type="radio" id="lblChoice3" name="rdChoice" class="icheckbox_flat-blue" style="display:inline;font-weight:normal" /><label for="lblChoice3" style="display:inline;font-weight:normal;padding-left:10px"></label>
+                                </div>
+                            </div>
+                            <div class="col-xs-1 border-right">
+                                <button type="button" class="btn btn-group-lg" id="btnChoice3" style="width:50px;height:30px">
+                                    <i class="fa fa-fw fa-eye" id="icnChoice3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @*</div>
+                        <div class="box-footer">*@
+                    <div class="row" style="padding-left:10px;padding-bottom:5px" id="divChoice4Grp">
+                        <div class="form-group">
+                            <div class="col-xs-2 border-right">
+                                <label>Choice D:</label>
+                            </div>
+                            <div class="col-xs-9 border-right" id="divMnChoice4">
+                                <div id="divChoice4" >
+                                    <input type="radio" id="lblChoice4" name="rdChoice" class="icheckbox_flat-blue" style="display:inline;font-weight:normal" /><label for="lblChoice4" style="display:inline;font-weight:normal;padding-left:10px"></label>
+                                </div>
+                            </div>
+                            <div class="col-xs-1 border-right">
+                                <button type="button" class="btn btn-group-lg " id="btnChoice4" style="width:50px;height:30px">
+                                    <i class="fa fa-fw fa-eye" id="icnChoice4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="padding-left:10px;height:35px">
+                        <div class="col-xs-12 border-right">
+                        </div>
+                    </div>
+                    <div class="row" style="padding-left:10px;height:35px">
+                        <div class="col-xs-12 border-right">
+                            <button id="btnClearchoice" class="btn btn-group-lg btn-primary">Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-xs-4">
+                    <a href="#" id="myImgBtn">
+                        <i class="fa fa-search-plus"></i>
+                    </a>
+                    <div id="ImageScenario" class="ui-icon-zoomin">
+
+                        @*<span class='zoom' id='ex1'>
+
+                            <img id="QuestionImage" src="~/Images/evr.png?@DateTime.Now.Ticks.ToString()" style="width:100%;height:100%; object-fit:contain;background-color:white" alt='Unable to display image'>
+                            </span>*@
+                    </div>
+                    @*<button id="myImgBtn">expand</button>*@
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="navbar-fixed-bottom bg-gray-light" style="padding-bottom:20px">
+    <div class="col-md-6">
+        <div class="row" style="clear:none; align-items: center;display:flex;padding-bottom:2px">
+            <div class="col-md-4" style="font-size:smaller;text-align:right;">
+                <label>Elapsed Time:</label>
+            </div>
+            <div class="col-md-8">
+                @*<div id="progress1">*@
+                @*<div class="percent" id="tmrPer"></div>*@
+                @*<div class="pbar" id="pbar" style="height:17px"></div>*@
+                @*<div class="elapsed"></div>*@
+                @*</div>*@
+                <div id="progressbar1" style="height:17px"></div>
+            </div>
+
+        </div>
+        @*<div class="list-seperator bg-aqua" style="margin:8px 0px 8px 0px"></div>*@
+
+        <div class="row" style="align-items: center;display:flex;padding-bottom:2px">
+            <div class="col-md-4" style="font-size:smaller;text-align:right;">
+                <label>Questions Answered:</label>
+            </div>
+            <div class="col-md-8">
+                @*<div id="slider">
+                        <div id="custom-handle" class="ui-slider-handle"></div>
+                        <div id="progressbar"></div>
+                    </div>*@
+                <div id="progressbar" style="height:17px"><div id='pblabel' style="width: 100%;float: left;line-height: 100%;font-size:smaller"></div></div>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+
+            <div class="row">
+                @*<div class="col-md-4" style="font-size:x-small;">
+                        <label>Message for proctor:</label>
+                    </div>
+                    <div class="col-md-6" style="font-size:smaller;text-align:right;">
+                        <input type="text" class="form-control" id="txtSendMsg" placeholder="Enter message here" style="font-size:smaller;height:25px" />
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" id="btnProcMsg" style="width:80px;height:25px;font-size:x-small" class="btn btn-group-lg btn-primary">Send</button>
+                    </div>*@
+                <div class="col-md-1">
+                    <a href="#" title="Alert instructor" onclick="onRaiseHand()"><img src="~/Images/raise-hand.png" height="50" width="50" /></a>
+                </div>
+                <div class="col-md-7">
+                    <label id="lblMessage" style="font-size:small;padding-top:12px"></label>
+                </div>
+            </div>
+        </div>
+        @*<div class="" id="msglist" style="font-size:x-small;height:30px">
+                <div class="row" >
+                    <div class="col-md-1" style="font-size:x-small;">
+                        <label>Messages:</label>
+                    </div>
+                    <div class="col-md-11 pre-scrollable" style="height:30px">
+                        <ul id="discussion"></ul>
+                    </div>
+                </div>
+            </div>*@
+    </div>
+</div>

@@ -1,0 +1,48 @@
+﻿
+<div class="row">
+
+    <div class="col-xs-12 col-md-12">
+        @*<div class="box-header with-border">
+            <h3 class="box-title">Screens</h3>
+        </div>*@
+        <div class="box box-default">
+
+            <div class="box-body">
+                <!--Examinee list -->
+
+                <div class="row">
+
+                    <div class="form-group" style="margin-top:5px">
+                        <table border=1 style="width:100%" class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width:5%">
+                                        Screen Name
+                                    </th>
+                                    <th class="text-center" style="width:40%">
+                                        Controller
+                                    </th>
+                                    <th class="text-center" style="width:40%">
+                                        View Name
+                                    </th>
+                                    <th class="text-center" style="width:10%">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="template:{name:'tableRow', foreach: tableRows}"></tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>
+                                        <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" data-bind="click: addNewRow">
+                                            Add Screen
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

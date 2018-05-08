@@ -1,0 +1,95 @@
+﻿@using FSI.LAB.eTesting.Hub.Controllers
+<aside class="main-sidebar">
+    <section class="sidebar">
+        @* BEGIN Search *@
+        @*<form action="#" method="get" class="sidebar-form">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Search...">
+                <span class="input-group-btn">
+                    <button type="submit" name="search" id="search-btn" class="btn btn-flat">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </span>
+            </div>
+        </form>*@
+        @* END Search *@
+        @* BEGIN Menu *@
+        <ul class="sidebar-menu">
+            <li class="header">NAVIGATION</li>
+            @*<li class="@(ViewContext.RouteData.Values["Action"].ToString() == nameof(HomeController.Index) ? "active" : "")">
+                    <a href="@Url.Action("Index", "Home")"><i class="fa fa-anchor fa-500px"></i> <span>Home</span></a>
+                </li>*@
+            <li class="treeview" id="mnuTestAdmin">
+                <a href="#">
+                    <i class="fa fa-link"></i> <span>Exam Administration</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu">
+                    <li class="">
+                        <a href="@Url.Action("ExamSchedulers", "Home")"><i class="fa fa-calendar"></i> <span>Scheduling</span></a>
+                    </li>
+                </ul>
+                <ul class="treeview-menu">
+                    <li class="">
+                        <a href="@Url.Action("PaperExam", "Home")"><i class="fa fa-credit-card"></i> <span>Management</span></a>
+                    </li>
+                    @*<li><a href="#"></a></li>*@
+                </ul>
+            </li>
+            @*<li class="" id="mnuExmnCred">
+                <a href="@Url.Action("ExamineeCredentials", "Home")"><i class="fa fa-credit-card"></i> <span>Examinee Credentials</span></a>
+            </li>*@
+            <li class="" id="mnuProcDash">
+                <a href="@Url.Action("ProctorDashboard", "Home")" ><i class="fa fa-anchor"></i> <span>Instructor Proctor Dashboard</span></a>
+            </li>
+            @*
+                <li class="" active"">
+                    <a href="@Url.Action("Examinee", "Home" )"><i class="fa fa-anchor"></i> <span>Examinee</span></a>
+                </li>*@
+            @*<li class="" id="mnuSupplInfo">
+                <a href="@Url.Action("SupplimentalInfo", "Home")"><i class="fa fa-anchor"></i> <span>Supplemental Info</span></a>
+            </li>*@
+            @*<li class="" id="mnuRoles">
+                <a href="@Url.Action("Roles", "Home" )"><i class="fa fa-anchor"></i> <span>Roles Management</span></a>
+            </li>*@
+            <li class="" id="mnuUsers">
+                <a href="@Url.Action("Users", "Home" )"><i class="fa fa-anchor"></i> <span>Access Management</span></a>
+            </li>
+            @*<li class="" active"">
+                    <a href="@Url.Action("TestNG", "Home" )"><i class="fa fa-anchor"></i> <span>Test NG</span></a>
+                </li>*@
+            <li class="treeview" id="mnuReports">
+                <a href="#">
+                    <i class="fa fa-link"></i> <span>Reports</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu">
+                    <li><a href="#">Client performance report</a></li>
+                    <li><a href="#">Exam report</a></li>
+                    <li><a href="#">Chat session report</a></li>
+                    <li><a href="#">Subject proficiency report</a></li>
+                </ul>
+            </li>
+
+            @*<li class="treeview">
+                <a href="#">
+                    <i class="fa fa-link"></i> <span>Answer Sheets</span>
+                    <span class="pull-right-container">
+                        <i class="fa fa-angle-left pull-right"></i>
+                    </span>
+                </a>
+                <ul class="treeview-menu">
+                    <li class="" active"">
+                        <a href="@Url.Action("PilotExam", "AnswerSheet")"><i class="fa fa-credit-card"></i> <span>Pilot Exam</span></a>
+                    </li>
+                    <li><a href="#"></a></li>
+                </ul>
+            </li>*@
+        </ul>
+        @* END Menu *@
+    </section>
+</aside>

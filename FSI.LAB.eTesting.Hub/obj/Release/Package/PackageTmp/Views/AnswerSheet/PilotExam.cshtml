@@ -1,0 +1,297 @@
+﻿@{
+    ViewBag.Title = "Pilot Examination Answer Sheet";
+    //ViewBag.Description = "Home Page";
+}
+
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+
+<style type="text/css">
+
+  userbg
+{
+    background: #54555c  url(~/Images/AnswerSheet.PNG) repeat-x top;
+    background-color:#FF6600;
+width: 100%;
+	height: auto;
+}
+</style>
+<script type="text/javascript">
+    $(function () {
+
+        $('.chkclass').on('ifClicked', function () {
+            $("[name='" + $(this).attr("name") + "']").not(this).iCheck('uncheck');
+        });
+    });
+    $(document).on("click", "#imageToggle", function () {
+        if ($('#divImage').is(":visible")) {
+            $('#divImage').hide();
+            $('#divMain').removeClass('col-md-6');
+            $('#divMain').addClass('col-md-12');
+            //return;
+        }
+        else  {
+            $('#divImage').show();
+            $('#divMain').removeClass('col-md-12');
+            $('#divMain').addClass('col-md-6');
+            $('#divImage').addClass('col-md-6');
+            //return;
+        }
+    });
+    $(document).ready(function () {
+        $('#divImage').hide();
+        $('#divMain').removeClass('col-md-6');
+        $('#divMain').addClass('col-md-12');
+        $('#divImage').removeClass('col-md-6');
+        
+    })
+</script>
+
+<div class="row">
+    <div class="col-md-10">
+        @*<h3>Pilot Examination Answer Sheet</h3>*@
+    </div>
+    <div class="col-md-2" style="padding-bottom:20px">
+        <a href="#" title="Display captured answer sheet" id="imageToggle"><i class="fa fa-fw fa-image" style="font-size:2em"></i></a>
+    </div>
+</div>
+<div class="row userbg">
+    <div class="col-md-12" id="divMain">
+        <div style="font-size: 8pt; overflow:auto;display:block">
+            <table border='0' style="width:100%;padding:0;border-spacing:0">
+                <tr>
+                    <td align="left">
+                        <table border='0' style="width:100%;padding:1px;border-spacing:1px">
+
+                            <tr>
+                                <td>
+                                    <table border='0' style="width:100%;padding:0;border-spacing:0">
+                                        <tr>
+                                            <td style='white-space: nowrap;width:1%'>
+                                                <b>Exam Title:</b>
+                                            </td>
+                                            <td style='width:80%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid;'
+                                                align="center">
+                                                <label id="TitleLbl"></label>
+                                            </td>
+                                            <td style="width:19%">
+                                                <table border='0' style="width:100%;padding:0;border-spacing:0">
+                                                    <tr>
+                                                        <td style='width:1%;white-space: nowrap'>
+                                                            <b>Version:</b>
+                                                        </td>
+                                                        <td style='border-bottom: 1px solid Black; border-left: 0 solid Black; border-right: 0 solid Black; border-top: 0 solid Black; text-align: center;'>
+                                                            <label id="VersionLbl"></label>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <table border='0' style="width:100%;padding:0;border-spacing:0">
+                                        <tr>
+                                            <td style='white-space: nowrap'>
+                                                <b>Examination Date:</b>
+                                            </td>
+                                            <td style='width:5%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'>
+                                                &nbsp; &nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td>
+                                                /
+                                            </td>
+                                            <td style='width:5%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'>
+                                                &nbsp; &nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td>
+                                                /
+                                            </td>
+                                            <td style='width:5%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'>
+                                                &nbsp; &nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td style="text-align: left">
+                                                (mm/dd/yy)&nbsp;&nbsp;&nbsp;
+                                            </td>
+                                            <td style='white-space: nowrap'>
+                                                <b>Client Printed Name:</b>
+                                            </td>
+                                            <td style='width:80%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'>
+                                                &nbsp;
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <table border='0' style="width:100%;padding:0;border-spacing:0">
+                                        <tr>
+                                            <td style="width:50%">
+                                                <b>
+                                                    Overall Avg. Score: No. Correct <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u> / No. Questions
+                                                    <label id="JAATotalLabel">0</label>
+                                                    = <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>
+                                                </b> %
+                                            </td>
+                                            <td style="width:20%"><b>Examiner Printed Name: </b></td>
+                                            <td style='width:30%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <table border='0' style="width:100%;padding:0;border-spacing:0">
+                                        <tr>
+                                            <td style="width:50%"><b>Pass / Fail (Mark as Applicable)</b></td>
+                                            <td style="width:20%" align="left"><b>Examiner Signature: </b></td>
+                                            <td style='width:30%;border-bottom: 1px; border-left: 0; border-right: 0; border-top: 0; border-color: Black; border-style: solid'></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table border='0' style='width:100%;padding:1px;border-spacing:0;border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid; overflow-x:scroll;overflow:auto;'>
+                <tr>
+                    <td colspan="4" style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        PART 1 (CLOSED BOOK)
+                    </td>
+                    <td colspan="2" style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        PART 2 (OPEN BOOK)
+                    </td>
+                </tr>
+                <tr>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 1
+                    </td>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 2
+                    </td>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 3
+                    </td>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 4
+                    </td>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 7
+                    </td>
+                    <td style='border-bottom: 1px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+                        align="center">
+                        SECTION 8
+                    </td>
+                </tr>
+                <tr>
+                    <td style='border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid;vertical-align:top' rowspan="3">
+                        <div id="divSection1Tbl">
+                            <table id="Section1Tbl" style="width:100%">
+                                @Html.Raw(ViewData["Section1Tbl"].ToString())
+</table>
+</div>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid;vertical-align:top' rowspan="3">
+    <table id="Section2Tbl" style="width:100%">
+        @Html.Raw(ViewData["Section2Tbl"].ToString())
+</table>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid;vertical-align:top' rowspan="3">
+    <table id="Section3Tbl" style="width:100%">
+        @Html.Raw(ViewData["Section3Tbl"].ToString())
+</table>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid;vertical-align:top'>
+    <table id="Section4Tbl" style="width:100%">
+        @Html.Raw(ViewData["Section4Tbl"].ToString())
+</table>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+    rowspan="3" valign="top">
+    <table id="Section7Tbl" style="width:100%">
+        @Html.Raw(ViewData["Section7Tbl"].ToString())
+</table>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 1px; border-color: Black; border-style: solid'
+    rowspan="3" valign="top">
+    <table id="Section8Tbl" style="width:100%"></table>
+</td>
+</tr>
+
+<tr>
+    <td style='width:11%;height:5%;border: 1px solid Black; text-align: center;'>
+        SECTION 5
+    </td>
+    <td style='width:11%;border: 1px solid Black; text-align: center;' height="5%">
+        SECTION 6
+    </td>
+</tr>
+<tr>
+    <td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 0px; border-color: Black; border-style: solid'
+        rowspan="10">
+        <table id="Section5Tbl" style="width:100%">
+            @Html.Raw(ViewData["Section5Tbl"].ToString())
+</table>
+</td>
+<td style='width:11%;border-bottom: 0px; border-left: 1px; border-right: 1px; border-top: 0px; border-color: Black; border-style: solid'
+    rowspan="10">
+    <table id="Section6Tbl" style="width:100%">
+        @Html.Raw(ViewData["Section6Tbl"].ToString())
+</table>
+</td>
+</tr>
+</table>
+
+<table style="width:100%" border="0">
+    <tr>
+        <td style="width:20%">
+            &nbsp;
+        </td>
+        <td align="center">
+            EASA PILOT EXAMINATION ANSWER SHEET
+            <br />
+            RETAIN IN CLIENT FOLDER AS PER CURRENT GUIDELINES
+        </td>
+        <td style="width:20%;text-align:right"></td>
+    </tr>
+</table>
+
+</div>
+</div>
+
+<div class="col-md-6" id="divImage" style="overflow-x:scroll">
+    <img src="~/Images/AnswerSheet.PNG" />
+</div>
+</div>
+<div class="box-header">
+    <div class="row">
+
+        <div class="col-xs-7 col-md-4">
+
+        </div>
+        <div class="col-xs-7 col-md-8">
+            <button class="btn btn-primary" style="width:110px">Capture</button>
+
+            <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnSubmit" style="width:110px">
+                Submit
+            </button>
+            <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCancel" @*onclick="location.href='@Url.Action("licenseamendment", "LCM" , new { btntext="Contracts" })'"*@ style="width:110px">
+                Print
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+{
+  "_from": "com-plugin-examineeplugin",
+  "_id": "com-plugin-examineeplugin@1.0.2",
+  "_inBundle": false,
+  "_integrity": "sha512-7w/9yxN9QJ+AR3OiBfz0qsiYzHj/cCl/WULBMWe+MEPR2lwhjQhI2LUlr05mLbOLEO95tptQRLTTnXsdg5XCBQ==",
+  "_location": "/com-plugin-examineeplugin",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "com-plugin-examineeplugin",
+    "name": "com-plugin-examineeplugin",
+    "escapedName": "com-plugin-examineeplugin",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/com-plugin-examineeplugin/-/com-plugin-examineeplugin-1.0.2.tgz",
+  "_shasum": "a12fcc62377ab0a8a7ac5f456c1b88d3732b3dde",
+  "_spec": "com-plugin-examineeplugin",
+  "_where": "D:\\D_Bkup\\Jayendra\\personal\\SampleApps\\eTestingExaminee_phonegap_plugin\\FSI.LAB.eTesting.Client",
+  "author": {
+    "name": "jayendranath"
+  },
+  "bundleDependencies": false,
+  "cordova": {
+    "id": "com-plugin-examineeplugin",
+    "platforms": [
+      "ios"
+    ]
+  },
+  "deprecated": false,
+  "description": "",
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-ios"
+  ],
+  "license": "ISC",
+  "name": "com-plugin-examineeplugin",
+  "version": "1.0.2"
+}

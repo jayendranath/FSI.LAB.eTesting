@@ -1,0 +1,366 @@
+﻿@{
+    ViewBag.Title = "Instructor Proctor Dashboard";
+
+}
+<!-- The jQuery library is a prerequisite for all jqSuite products -->
+@*<script type="text/ecmascript" src="../../../js/jquery.min.js"></script>*@
+<script type="text/ecmascript" src="~/Scripts/jquery-3.2.1.min.js"></script>
+<!-- This is the Javascript file of jqGrid -->
+@*<script type="text/ecmascript" src="../../../js/trirand/jquery.jqGrid.min.js"></script>*@
+<script type="text/ecmascript" src="~/Scripts/free-jqGrid/jquery.jqgrid.min.js"></script>
+<!-- This is the localization file of the grid controlling messages, labels, etc.
+<!-- We support more than 40 localizations -->
+@*<script type="text/ecmascript" src="../../../js/trirand/i18n/grid.locale-en.js"></script>*@
+<script type="text/ecmascript" src="~/Scripts/free-jqGrid/i18n/grid.locale-en.js"></script>
+<!-- A link to a jQuery UI ThemeRoller theme, more than 22 built-in and many more custom -->
+@*<link rel="stylesheet" type="text/css" media="screen" href="../../../css/jquery-ui.css" />*@
+<link type="text/css" media="screen" href="~/Scripts/jquery-ui.css" rel="stylesheet" />
+<!-- The link to the CSS that the grid needs -->
+@*<link rel="stylesheet" type="text/css" media="screen" href="../../../css/trirand/ui.jqgrid.css" />*@
+<link type="text/css" media="screen" href="~/Content/ui.jqgrid.css" rel="stylesheet" />
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src="~/Scripts/signalr/conHub.js"></script>
+<meta charset="utf-8" />
+
+
+<link rel="stylesheet" type="text/css" media="screen" href="~/Content/css/bootstrap.css" />
+@*<link rel="stylesheet" type="text/css" media="screen" href="../../../css/uibootstrap/jquery-ui-1.10.0.bootstrap.css" />*@
+<!-- The link to the CSS that the grid needs -->
+<link rel="stylesheet" type="text/css" media="screen" href="~/Content/css/jqGrid.bootstrap.css" />
+
+<style>
+    .ui-jqgrid > .ui-jqgrid-view {
+        font-size: small;
+        width: auto;
+    }
+
+    .ui-jqgrid table tr:nth-child(odd) {
+        background-color: #d3d3d3;
+    }
+
+    .ui-jqgrid table tr:hover {
+        background-color: #da7958;
+    }
+
+    .ui-th-column, .ui-jqgrid .ui-jqgrid-htable th.ui-th-column {
+        border-bottom: 0 none;
+        border-top: 0 none;
+        overflow: hidden;
+        text-align: center;
+        white-space: nowrap;
+        background: #8ea5d0;
+        font-size: small;
+    }
+
+    .tooltip-arrow {
+        font-size: 14px;
+    }
+
+    .cellvalchanged {
+        background-color: lawngreen;
+    }
+</style>
+<script type="text/javascript">
+
+    var con = $.hubConnection('@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())');
+    //var con = $.hubConnection('http://localhost:52202/');
+    var hub = con.createHubProxy('labExamHub');
+    function starthub() {
+
+        con.qs = { SessionId: getSessionId() };
+        if (con.state == 4) {
+            con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] })
+                .done()
+                .fail(function (err) { alert("Custom:" + err) });
+        }
+    }
+
+
+    var link1 = '@Url.Action("ProctorConsolePartial", "Home", new { Status = "-1" })';
+    link1 = link1.replace("-1", "inprogress");
+    var link2 = '@Url.Action("ProctorConsolePartial", "Home", new { Status = "-1" })';
+    link2 = link2.replace("-1", "completed");
+    //var tblData;
+    //$.ajax({
+    //    type: 'GET',
+    //    url: 'https://etestingwebapi.azurewebsites.net/api/examschedules',
+    //    contentType: 'text/plain',
+    //    dataType: 'json',
+    //    success: function (data) {
+    //        tblData = JSON.stringify(data);
+    //    },
+    //    error: function (error) {
+    //        alert(error)
+    //    }
+
+    //});
+    //var mydata = [
+    //       { AssessmentId: "CC1D6BFA-709E-4911-AA30-E32D9EF2453F", AssessmentTitle: "MX-Beech 200 Series (PWC PT6) MX Initial 11333132340", Course: "Beech KA 300 Series Familiarization 4 Days - Theory (EASA, UAE)  - Wichita - 27-Nov-17", CourseType: "MX", Center: "Wichita", Proctor: "Siva; Jayendra", StartedAt: "08-18-2017 9:30 AM CST", Status: "Not Started", Action: "" },
+    //       { AssessmentId: "5E213603-284D-44BC-B212-21E8C58469AB", AssessmentTitle: "MX-Sikorsky S-76C++ (TA 2S2) 445566", Course: "MX-Sikorsky S-76C++ (TA 2S2)", CourseType: "MX", Center: "Wichita", Proctor: "Sudhakar", StartedAt: "09-10-2017 11:30 AM CST", Status: "Awaiting", Action: "" },
+    //       { AssessmentId: "F2C8417A-047C-470A-A160-6B1FDE819B0B", AssessmentTitle: "MX-Gulfstream G280 (HTF7250G) 112233", Course: "MX-Gulfstream G280 (HTF7250G)", CourseType: "MX", Center: "Wichita", Proctor: "Michelle; Jayendra", StartedAt: "09-02-2017 8:30 AM CST", Status: "In Progress", Action: "" },
+    //       { AssessmentId: "2EFE2DDF-1D64-452D-A4A0-CB8807AB0FB3", AssessmentTitle: "Pilot-Bombardier CL605 66555", Course: "Pilot-Bombardier CL605", CourseType: "Pilot", Center: "Wichita", Proctor: "Sherri", StartedAt: "08-31-2017 10:30 AM CST", Status: "Completed", Action: "" },
+    //       { AssessmentId: "7731569D-162D-426E-8170-4FAE129224BE", AssessmentTitle: "MX-Beech 200 Series (PWC PT6) MI EMX11061140602", Course: "Beech KA 300 Series Familiarization 4 Days - Theory (EASA, UAE)  - Wichita - 28-Nov-17", CourseType: "MX", Center: "Wichita", Proctor: "Janna", StartedAt: "08-10-2017 10:30 AM CST", Status: "Completed", Action: "" },
+    //       { AssessmentId: "7731569D-162D-426E-8170-4FAE129224BE", AssessmentTitle: "MX-Beech 200 Series (PWC PT6) MI EMX11061140602", Course: "Beech KA 300 Series Familiarization 4 Days - Theory (EASA, UAE)  - Wichita - 11-Dec-17", CourseType: "MX", Center: "Wichita", Proctor: "Michelle; Jayendra", StartedAt: "12-11-2017 9:00 AM CST", Status: "Not Started", Action: "" },
+    //       { AssessmentId: "5C77955C-7587-4A6F-BDE9-BD19F36B830B", AssessmentTitle: "MX-Gulfstream GIII 1159 (VSCF) Series (RR Spey 511-8) 665544", Course: "MX-Gulfstream GIII 1159 (VSCF) Series (RR Spey 511-8)", CourseType: "MX", Center: "Wichita", Proctor: "Jayendra", StartedAt: "09-01-2016 12:00 PM CST", Status: "Cancelled", Action: "" },
+    //       { AssessmentId: "BA12C784-E84A-4B82-B2DA-E445658F5339", AssessmentTitle: "Pilot-Pilatus PC-12NG 665566", Course: "Pilot-Pilatus PC-12NG", CourseType: "Pilot", Center: "Wichita", Proctor: "Siva", StartedAt: "09-01-2015 2:30 PM CST", Status: "Cancelled", Action: "" },
+    //       { AssessmentId: "C5C34870-99A8-42DD-8DD4-E94ED9AF653C", AssessmentTitle: "MX-Sikorsky S-70/UH-60 (GE-700 Series) 888666", Course: "MX-Sikorsky S-70/UH-60 (GE-700 Series)", CourseType: "MX", Center: "Wichita", Proctor: "Siva", StartedAt: "09-20-2017 12:30 PM CST", Status: "In Progress", Action: "" },
+    //       { AssessmentId: "5DF5A4DD-C9BE-46E8-80C1-3C8EE1B1AD42", AssessmentTitle: "Pilot-Cessna 550 Citation II 998899", Course: "Pilot-Cessna 550 Citation II", CourseType: "Pilot", Center: "Wichita", Proctor: "Sudhakar", StartedAt: "03-01-2016 11:00 AM CST", Status: "Terminated", Action: "" },
+    //       { AssessmentId: "D760A88A-FB89-4AAF-82DB-816E6EDCE0E9", AssessmentTitle: "EASA Falcon MX 900EX EASy B1 Week 3", Course: "EASA Falcon MX 900EX EASy B1 Week 3", CourseType: "Pilot", Center: "Wichita", Proctor: "Jayendra", StartedAt: "11-06-2017 02:30 AM CST", Status: "Not Started", Action: "" },
+    //       { AssessmentId: "6ADF5A16-DE9B-45F7-A353-3706E985C87E", AssessmentTitle: "CST_Boeing 747-400 400232", Course: "CST_Boeing 747-400", CourseType: "CS", Center: "Wichita", Proctor: "Jayendra", StartedAt: "09-01-2017 3:00 PM CST", Status: "Terminated", Action: "" },
+    //       { AssessmentId: "9DD11EA2-9081-4F2B-90F1-8D19BB3B99A6", AssessmentTitle: "Pilot-G200-DFW PR11080212115", Course: "Pilot-G200-DFW PR11080212115", CourseType: "Pilot", Center: "Wichita", Proctor: "Siva; Jayendra", StartedAt: "12-11-2017 9:30 AM CST", Status: "Not Started", Action: "" },
+    //       { AssessmentId: "50D3BCCE-2431-416D-AB9D-C3DC06035EE0", AssessmentTitle: "CST_Embraer EMB 12020201", Course: "CST_Embraer EMB 120", CourseType: "CS", Center: "Wichita", Proctor: "Michelle", StartedAt: "08-31-2017 2:00 PM CST", Status: "Paused", Action: "" },
+    //       { AssessmentId: "18AC894A-A3F1-4DC9-A131-1A20E9942CDF", AssessmentTitle: "MX-Cessna 525C (Williams FJ44) MI EMX10334141803", Course: "MX-Cessna 525C (Williams FJ44) MI EMX10334141803", CourseType: "MX", Center: "Wichita", Proctor: "Siva; Jayendra", StartedAt: "12-11-2017 9:00 AM CST", Status: "Not Started", Action: "" },
+    //];
+
+
+    $(document).ready(function () {
+        starthub();
+        var rowsToColor = [];
+        $("#jqGrid").jqGrid({
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/proctor/@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()/examschedules',
+            datatype: "json",
+            width: '100%',
+            height: 'auto',
+            //width: '1000',
+            autowidth: true,
+            shrinkToFit: true,
+            gridview: true,
+            loadonce: true,
+            colModel: [
+                //{ label: 'Session', name: 'Session', width: '5%', key: true, tooltiptext: "asdf" },
+                { label: 'ExamScheduleId', name: 'ExamScheduleId', width: '0%', hidden: true },
+                { label: 'Course', name: 'Course', width: '24%' },
+                { label: 'Exam', name: 'AssessmentTitle', width: '25%' },
+                { label: 'Type', name: 'CourseType', width: '5%', align: 'center' },
+                { label: 'Center', name: 'CenterName', width: '9%', align: 'center' },
+                {
+                    label: 'Proctor(s)', name: 'ProctorNames', width: '10%',
+                    formatter: function (cellvalue, options, rowObject) {
+                        var stProctor = "";
+                        if (rowObject.ExamScheduleProctorEntities.length > 0) {
+                            for (var i = 0; i < rowObject.ExamScheduleProctorEntities.length; i++) {
+                                if (stProctor != "")
+                                    stProctor = stProctor + ", ";
+                                stProctor = stProctor + rowObject.ExamScheduleProctorEntities[i].ProctorName;
+                            }
+                        }
+                        return stProctor;
+                    }
+                },
+                { label: 'Exam Date/Time', name: 'ScheduleDate', width: '12%' },
+                { label: 'Status', name: 'StatusType', width: '10%', stype: "select", searchoptions: { value: ':[All];In Progress:In Progress;Not Started:Not Started;InReview:InReview;Cancelled:Cancelled;Completed:Completed;Terminated:Terminated' }, formatter: rowColorFormatter },
+                {
+                    label: 'Action', name: 'Action', width: '5%', search: false,
+                    formatter: function (cellvalue, options, rowObject) {
+                        if (rowObject.StatusType === "Not Started" || rowObject.StatusType === "Terminated") {
+                            var link1 = '@Html.Raw(Url.Action("ProctorConsolePartial", "Home", new { AssessmentID = "-1", AssessmentName = "-2", StatusId = "-3" }))';
+                            link1 = link1.replace("-1", rowObject.ExamScheduleId);
+                            link1 = link1.replace("-2", encodeURIComponent(rowObject.Course));
+                            link1 = link1.replace("-3", rowObject.StatusId);
+                            link1 = "<a onClick=\"anchorClicked('" + link1 + "', '" + rowObject.Course + "', '" + rowObject.ExamScheduleId + "')\" title=\"Start Proctoring\" href=\"#\" ><i class=\"fa fa-fw fa-play\"></i></a>";
+                        }
+                        else if (rowObject.StatusType === "Completed" || rowObject.StatusType === "InReview") {
+                            var link1 = '@Html.Raw(Url.Action("ProctorReview", "Home", new { AssessmentID = "-1", AssessmentName = "-2" }))';
+                            //var link1 = '@Html.Raw(Url.Action("ProctorConsolePartial", "Home", new { AssessmentID = "-1", AssessmentName = "-2" }))';
+                            link1 = link1.replace("-1", rowObject.ExamScheduleId);
+                            link1 = link1.replace("-2", encodeURIComponent(rowObject.Course));
+                            //link1 = link1.replace("-3", rowObject.StatusId);
+                            link1 = "<a title=\"Review results and complete to 100%\" target=\"_blank\" href=" + link1 + " ><i class=\"fa fa-fw fa-stop\"></i></a>";
+                            //link1 = "<a onClick=\"anchorClicked('" + link1 + "', '" + rowObject.Course + "', '" + rowObject.ExamScheduleId + "')\" title=\"Start Proctoring\" href=\"#\" ><i class=\"fa fa-fw fa-play\"></i></a>";
+                        }
+                        else if (rowObject.StatusType === "InProgress") {
+                            //var link1 = '@Html.Raw(Url.Action("ProctorConsolePartial", "Home", new { AssessmentID = "-1", AssessmentName = "-2", StatusId = "-3" }))';
+                            var link1 = '@Html.Raw(Url.Action("ProctorConsolePartial", "Home", new { AssessmentID = "-1", AssessmentName = "-2", StatusId = "-3" }))';
+                            link1 = link1.replace("-1", rowObject.ExamScheduleId);
+                            link1 = link1.replace("-2", encodeURIComponent(rowObject.Course));
+                            link1 = link1.replace("-3", rowObject.StatusId);
+                            //link1 = "<a title=\"Take over proctoring session\" href='#' ><i class=\"fa fa-fw fa-play\"></i></a>";
+                            link1 = "<a onClick=\"anchorClicked('" + link1 + "', '" + rowObject.Course + "', '" + rowObject.ExamScheduleId + "')\" title=\"Start Proctoring\" href=\"#\" ><i class=\"fa fa-fw fa-play\"></i></a>";
+                        }
+
+                        else
+                            link1 = "";
+
+                        var link2 = '@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Home/ExamScheduler?sid=' + rowObject.ExamScheduleId;
+                        var link3 = '<a title=\"View schedule details\" href=\"' + link2 + '\" style=\"padding-right:8px\"><i class=\"fa fa-fw fa-newspaper-o\"></i></a>';
+                        link1 = link3 + link1
+
+                        return link1;
+                    }
+                },
+                //{ label: 'Progress', name: 'Progress', width: '10%' },
+                //{ label: 'Administration', name: 'Administration', width: '5%' },
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            //caption: "Load jqGrid through Javascript Array",
+            gridComplete: function () {
+                for (var i = 0; i < rowsToColor.length; i++) {
+                    //var status = $("#" + rowsToColor[i]).find("td").eq(7).html();
+                    //if (status == "In Progress") {
+                    $("#" + rowsToColor[i]).find("td").css("background-color", "green");
+                    $("#" + rowsToColor[i]).find("td").css("color", "silver");
+                    //}
+                }
+            }
+        });
+        $('#jqGrid').jqGrid('filterToolbar', { stringResult: true, searchOnEnter: false, defaultSearch: "cn" });
+        //$('#jqGrid').css('font-size', '12px');
+        //$("tr.jqgrow:odd").css("background", "#d3d3d3");
+
+        //
+
+        function rowColorFormatter(cellValue, options, rowObject) {
+            if (cellValue == 'In Progress')
+                rowsToColor[rowsToColor.length] = options.rowId;
+            return cellValue;
+        }
+
+        $('.sidebar-toggle').on('click', function () {
+            setTimeout(function () {
+                //your code to be executed after 1 second
+                //alert($('#maindiv').width());
+                $("#jqGrid").jqGrid().setGridWidth($('#maindiv').width());;
+            }, 500);
+
+            //$("#jqGrid").jqGrid('setGridWidth', '100%');
+
+        })
+
+        ////      $('#maindiv').resize(function () {
+        //      $(document).on("resize", "#maindiv", function () {
+
+        //          alert($('#maindiv').width());
+        //      });
+
+    });
+
+    function fnStartExam(exScheduleId) {
+        @*var ResponseDetails = JSON.stringify({
+            "ExamScheduleId": exScheduleId,
+            "CreatedById": "@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()",
+            "StatusId": 1,
+        });*@
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/exam/' + exScheduleId + '/@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()/sendexampasscodes',
+            //data: ResponseDetails,
+            contentType: "application/json",
+            dataType: 'json',
+            success: function (data, status, xhr) {
+                //alert("The result is : " + status + ": " + data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+    }
+    @*
+        NotStarted = 1,
+        InProgress = 2,
+        Paused = 3,
+        Completed = 4,
+        Cancelled = 5,
+        Terminated = 6
+    *@
+
+    hub.on("onExamStatusChanged", function (examScheduleId, StatusId) {
+        var grid = $("#jqGrid"), rows = grid[0].rows, cRows = rows.length;
+        var rowno;
+        for (var iRow = 1; iRow < cRows; iRow++) {
+            if (rows[iRow].cells[0].innerHTML == examScheduleId) {
+                rowno = iRow;
+                if (StatusId == 1)
+                    rows[iRow].cells[7].innerHTML = 'NotStarted';
+                if (StatusId == 2)
+                    rows[iRow].cells[7].innerHTML = 'InProgress';
+                if (StatusId == 3)
+                    rows[iRow].cells[7].innerHTML = 'Paused';
+                if (StatusId == 4)
+                    rows[iRow].cells[7].innerHTML = 'Completed';
+                if (StatusId == 5)
+                    rows[iRow].cells[7].innerHTML = 'Cancelled';
+                if (StatusId == 6)
+                    rows[iRow].cells[7].innerHTML = 'Terminated';
+                //setTimeout(function() {
+                //}, 2000);
+            }
+        }
+        $("#jqGrid").setCell(rowno, 'StatusType', '', { 'background-color': 'lightgreen' });
+
+    });
+
+
+
+    var firsttime = false;
+    var smp = null;
+    var tabcount = 0;
+    var assmtname = "";
+    var glink = "";
+    var timer;
+    function anchorClicked(link1, assessmentname, exScheduleId) {
+        fnStartExam(exScheduleId)
+        tabcount += 1;
+        if (!(firsttime)) {
+            //smp = window.open("/eTesting/Home/ProctorConsole", "_blank", 'resizable=yes');
+            smp = window.open("@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Home/ProctorConsole", "_blank");
+            //link1 = link1.replace("SamplePartial", "Proctor");
+            //setTimeout(function () { smp.createTab(link1, tabcount, assessmentname) }, 5000);
+            //setTimeout(function () { smp.createTab(link1, assessmentname) }, 5000);
+            glink = link1;
+            assmtname = assessmentname;
+            firsttime = true;
+        }
+        else {
+            //link1 = link1.replace("SamplePartial", "Proctor");
+            //smp.createTab(link1, tabcount, assessmentname);
+
+
+            smp.createTab(link1, assessmentname);
+            smp.focus();
+        }
+        hub.invoke('JoinExamGroup', "ProctorDashboard", "@System.Web.HttpContext.Current.Session["AdLoginPNo"].ToString()", "Proctor")
+
+        timer = setInterval(checkChild, 500);
+
+        //$(this).click(function (e) {
+        //    var tr = $(e.target).closest('tr');
+        //    tr.find("td:nth-child(8)")[0].firstChild.title = "Take over proctoring session";
+        //    //var tx = tr.find("td:nth-child(8)").firstchild.attr("title","asdfasdfasdfasdfasdfasdFDd");
+        //});
+
+
+    };
+
+
+    function checkChild() {
+        if (smp != undefined) {
+            if (smp.closed) {
+                //alert("Child window closed");
+                clearInterval(timer);
+                firsttime = false;
+                smp = null;
+                tabcount = 0;
+                assmtname = "";
+                glink = "";
+            }
+        }
+    }
+
+    function firtTabOpen()
+    { smp.createTab(glink, assmtname); }
+    function OnResizeDocument() {
+        alert("The size of the window or the document has changed.");
+    }
+</script>
+
+<div class="row">
+    <div class="col-xs-12 col-md-12;">
+        @*<div class="box-header">
+                <h3 class="box-title">Scheduler</h3>
+            </div>*@
+        <div style="width:100%" id="maindiv">
+            <table id="jqGrid" width="98%"></table>
+        </div>
+    </div>
+</div>
+

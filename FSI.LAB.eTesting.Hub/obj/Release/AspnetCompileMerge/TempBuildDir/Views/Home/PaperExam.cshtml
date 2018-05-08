@@ -1,0 +1,133 @@
+﻿@{
+    ViewBag.Title = "Exam Management";
+
+}
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+
+<script src="~/Controllers/Proctor.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $.ajax({
+            type: 'GET',
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examschedules',
+            contentType: 'text/plain',
+            dataType: 'json',
+            success: function (data) {
+                var rowdata = "";
+                $.each(data, function (index, val) {
+                    rowdata = '<tr>';
+                    rowdata += '            <td hidden>' + val.ExamScheduleId + '</td>';
+                    rowdata += '            <td hidden>' + val.ExamSessionId + '</td>';
+                    rowdata += '<td>' + val.Course + '</td>';
+                    rowdata += '<td>' + val.AssessmentTitle + '</td>';
+                    rowdata += '<td>' + val.ProgramTitle + '</td>';
+                    rowdata += '<td>' + val.ScheduleDate + '</td>';
+                    rowdata += '<td class="text-center">' + val.Duration + '</td>';
+                    rowdata += '<td class="text-center">' + val.RoomNumber + '</td>';
+                    var stProctor = "";
+                    if (val.ExamScheduleProctorEntities.length > 0) {
+                        for (var i = 0; i < val.ExamScheduleProctorEntities.length; i++) {
+                            if (stProctor != "")
+                                stProctor = stProctor + ", ";
+                            stProctor = stProctor + val.ExamScheduleProctorEntities[i].ProctorName;
+                        }
+                    }
+
+                    rowdata += '<td>' + stProctor + '</td>';
+                    rowdata += '<td>';
+                    rowdata += '    <a title="Manage results" id="btnManageExam" href="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Home/PaperExamReview?ExamScheduleId=' + val.ExamScheduleId + '">';
+                    rowdata += '        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Manage_Exam.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />';
+                    rowdata += '    </a>';
+                    rowdata += '    <a title="Preview exam" id="btnPreviewSch" href="#" >';
+                    rowdata += '        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Preview.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />';
+                    rowdata += '    </a>';
+                    rowdata += '    <a title="Suspend exam" id="btnSuspendExam" href="#" onclick="">';
+                    rowdata += '        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Suspend_Exam.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />';
+                    rowdata += '    </a>';
+                    rowdata += '    <a title="Manage client credentials" id="btnExamineeCred" href="#" onclick="location.href = \'@Url.Action("ExamineeCredentials", "Home")\'">';
+                    rowdata += '        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/ManageCredentials.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />';
+                    rowdata += '    </a>';
+                    rowdata += '</td>';
+                    rowdata += '</tr>';
+
+
+                    $('#tblnmlist').append(rowdata);
+                });
+            },
+            error: function (error) {
+                alert(error)
+            }
+
+        });
+
+    })
+
+    $(document).on("click", "#btnPreviewSch", function () {
+        var str = $(this).closest('tr').find('td:eq(0)').text();
+        window.open('@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/Home/ExamScreen?AssessmentName='
+            + str + '&ProctorID=@FSI.LAB.eTesting.Hub.Models.GlobalVariables.ProctorID.ToString()&preview=1', '_blank');
+
+        @*window.open('@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/Home/ExamScreen?AssessmentName=9dd11ea2-9081-4f2b-90f1-8d19bb3b99a6&ProctorID=@GlobalVariables.ProctorID.ToString()', '_blank');*@
+    });
+</script>
+<div class="row">
+    <div class="col-xs-12 col-md-12;">
+        @*<div style="padding-left:950px;">
+            <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCreate" onclick="location.href='@Url.Action("ExamScheduler", "Home")'" style="width:110px">
+                Create
+            </button>
+        </div>*@
+        @*<div class="box-header">
+            <h3 class="box-title">Scheduler</h3>
+        </div>*@
+        <div class="box box-default">
+            <div class="box-body">
+                <div ng-app="appProctor" ng-controller="conProctor" id="divExamSchedule" data-ng-init="ExamSchedulersInit('@System.Configuration.ConfigurationManager.AppSettings["websiteURL"]')">
+                    <table class="table table-bordered" style="width:100%" id="tblnmlist">
+                        <thead>
+                            <tr>
+                                <th class="text-center" hidden>Exam ScheduleID</th>
+                                <th class="text-center" hidden>ExamSessionID</th>
+                                <th class="text-center">Course</th>
+                                <th class="text-center">Assessment</th>
+                                <th class="text-center">Program</th>
+                                <th class="text-center">Examination Date</th>
+                                <th class="text-center">Duration (Mins)</th>
+                                <th class="text-center">Room Number</th>
+                                <th class="text-center">Proctor</th>
+                                <th class="text-center" style="width:12%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @*<tr ng-repeat="examschudule in examschudules">
+                                <td hidden>{{examschudule.AssessmentId}}</td>
+                                <td>{{examschudule.Course}}</td>
+				                <td>{{examschudule.AssessmentTitle}}</td>
+                                <td>{{examschudule.ProgramTitle}}</td>
+                                <td>{{formateddate(examschudule.ScheduleDate) | date:'MM/dd/yyyy'}}</td>
+                                <td class="text-center">{{examschudule.Duration}}</td>
+                                <td class="text-center">{{examschudule.RoomNumber}}</td>
+                                <td>{{examschudule.ProctorUserName}}</td>
+                                <td>
+                                    <a title="Manage results" id="btnManageExam" href="#" onclick="location.href='@Url.Action("PaperExamReview", "Home")'">
+                                        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Manage_Exam.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />
+                                    </a>
+                                    <a title="Preview exam" id="btnPreviewSch" href="#" >
+                                        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Preview.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />
+                                    </a>
+                                    <a title="Suspend exam" id="btnSuspendExam" href="#" onclick="">
+                                        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/Suspend_Exam.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />
+                                    </a>
+                                    <a title="Manage client credentials" id="btnExamineeCred" href="#" onclick="location.href = '@Url.Action("ExamineeCredentials", "Home")'">
+                                        <img src="@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/Images/ManageCredentials.png?@DateTime.Now.Ticks.ToString()" height="30" width="30" />
+                                    </a>
+                                </td>
+                            </tr>*@
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

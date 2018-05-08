@@ -1,0 +1,840 @@
+﻿@{
+//ViewBag.Title = "Exam Scheduler Details";
+
+}
+@*<script src='~/scripts/jquery-latest.min.js' type='text/javascript'></script>*@
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<link href="~/Scripts/jquery-ui.css" rel="stylesheet" />
+@*<script src="~/Scripts/knockout-3.4.2.js" type="text/javascript"></script>*@
+<script src="~/Controllers/Proctor.js"></script>
+@*<link href="~/Content/ionic/css/ionic.css" rel="stylesheet" />
+    <script src="~/Content/ionic/js/ionic.js"></script>*@
+<style type="text/css">
+    .table tbody tr:hover td, .table tbody tr:hover th {
+        background-color: #eeeeea;
+    }
+
+    .table tr:nth-child(odd) {
+        background: none;
+    }
+
+    .dont-break-out {
+        /* These are technically the same, but use both */
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        -ms-word-break: break-all;
+        /* This is the dangerous one in WebKit, as it breaks things wherever */
+        word-break: break-all;
+        /* Instead use this non-standard one: */
+        word-break: break-word;
+        /* Adds a hyphen where the word breaks, if supported (No Blink) */
+        -ms-hyphens: auto;
+        -moz-hyphens: auto;
+        -webkit-hyphens: auto;
+        hyphens: auto;
+    }
+
+    .content-header {
+        display: none;
+    }
+
+    .rounded {
+        border-radius: 20px;
+        /*background: #000; */
+    }
+</style>
+<script id="tableRow" type="text/javascript">
+
+</script>
+
+<script type="text/javascript">
+    function deleteRow(row) {
+        var i = row.parentNode.parentNode.rowIndex;
+        document.getElementById('tblExaminee').deleteRow(i);
+    }
+    $(function () {
+        $("#txtProgram").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/programs/" + request.term,
+                    type: "GET",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        if (data.length > 0) {
+                            response($.map(data, function (item) {
+                                $("#txtAssessment").val('')
+                                $("#txtAssessment").attr("tag", "");
+                                return {
+                                    label: item.label,
+                                    value: item.label,
+                                    id: item.value
+                                };
+                            }))
+                        }
+                        else {
+                            response([{ label: "No results found", value: -1 }]);
+                        }
+                    }
+                })
+            },
+            select: function (request, response) {
+                $("#txtProgram").attr("tag", response.item.id);
+                $("#hdnProgramId").val(response.item.id);
+            }
+        }).focus(function () {
+            $(this).autocomplete("search", "");
+        });
+
+
+        $("#txtAssessment").autocomplete({
+            source: function (request, response) {
+                //var dataJson = { "Prefix": request.term, "ProgramId": $('#txtProgram').attr("tag") };
+                //var programId = $('#txtProgram').attr("tag");
+                var programId = $('#hdnProgramId').val();
+                $.ajax({
+                    url: "@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/assessments/" + request.term + '/' + programId,
+                    type: "GET",
+                    dataType: "json",
+                    data: { Prefix: request.term, ProgramId: programId },
+                    success: function (data) {
+                        if (data.length > 0) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.label,
+                                    value: item.label,
+                                    id: item.value
+                                };
+                            }))
+                        }
+                        else {
+                            response([{ label: "No results found", value: -1 }]);
+                        }
+                    }
+                })
+            },
+            select: function (request, response) {
+                $("#txtAssessment").attr("tag", response.item.id);
+                $("#assid").val(response.item.id);
+            }
+        }).focus(function () {
+            $(this).autocomplete("search", "");
+        });
+
+
+        $("#txtProctor").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/proctorUsers/" + request.term,
+                    type: "GET",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        if (data.length > 0) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.label,
+                                    value: item.label,
+                                    id: item.value
+                                };
+                            }))
+                        }
+                        else {
+                            response([{ label: "No results found", value: -1 }]);
+                        }
+                    }
+                })
+            },
+            select: function (request, response) {
+                $("#txtProctor").attr("tag", response.item.id);
+                $("#hdnProctorId").val(response.item.id);
+            }
+        }).focus(function () {
+            $(this).autocomplete("search", "");
+        });
+
+
+        $("#txtCourse").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/courses/" + request.term,
+                    type: "GET",
+                    dataType: "json",
+                    data: { Prefix: request.term },
+                    success: function (data) {
+                        if (data.length > 0) {
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item.label,
+                                    value: item.label,
+                                    id: item.value
+                                };
+                            }))
+                        }
+                        else {
+                            response([{ label: "No results found", value: -1 }]);
+                        }
+                    }
+                })
+            },
+            select: function (request, response) {
+                $("#txtCourse").attr("tag", response.item.id);
+                var strData = response.item.id;
+                var arrData = strData.split("~");
+                $("#txtProgram").attr("tag", arrData[1]);
+                $("#hdnProgramId").val(arrData[1]);
+                $("#txtProgram").val(arrData[2]);
+                //angular.element(document.getElementById('txtCourse')).scope().GetExaminees(arrData[0]);
+            }
+        }).focus(function () {
+            $(this).autocomplete("search", "");
+        });
+
+        //var availableClassTitle = [
+        //  "Caravan G1000 Pilot Recurrent + Wichita Cessna + 03-Jan-18",
+        //  "Caravan G1000 Pilot  Recurrent + Wichita Cessna + 05-Mar-18",
+        //  "Caravan I (CE-208) Recurrent + Wichita Cessna + 03-Jan-18",
+        //  "Caravan I (CE-208) Recurrent + Wichita Cessna + 05-Mar-18",
+        //  "Caravan G600 Pilot Recurrent + Wichita Cessna + 03-Jan-18",
+        //  "Caravan G600 Pilot Recurrent + Wichita Cessna + 05-Mar-18",
+        //  "Caravan G1000 Pilot Recurrent + Wichita East Learning Center + 03-Jan-18",
+        //    "Caravan G1000 Pilot Recurrent + Wichita East Learning Center + 10-Feb-18",
+        //    "Caravan I (CE-208) Recurrent + Wichita East Learning Center + 03-Jan-18",
+        //    "Caravan I (CE-208) Recurrent + Wichita East Learning Center + 10-Feb-18",
+        //    "Caravan G600 Pilot Recurrent + Wichita East Learning Center + 03-Jan-18",
+        //    "Caravan G600 Pilot Recurrent + Wichita East Learning Center + 10-Feb-18"
+        //];
+        //$("#txtClassTitle").autocomplete({
+        //    source: availableClassTitle
+        //});
+    });
+    function tableRow(number, ownerViewModel) {
+        this.number = ko.observable(number);
+        this.remove = function () {
+            ownerViewModel.tableRows.destroy(this);
+        }
+    }
+
+    //function tableRowsViewModel() {
+    //    var that = this;
+    //    this.tableRows = ko.observableArray([]);
+    //    this.addNewRow = function () {
+    //        //this.tableRows.push(new tableRow('', that));
+    //        $('#tblExaminee').append(addExRow);
+    //    }
+    //    this.addNewRow();
+
+    //    //dependentObservable to represent the last row's value
+    //    this.lastRowValue = ko.dependentObservable(function () {
+    //        var rows = that.tableRows();
+    //        return rows.length ? rows[rows.length - 1].number() : null;
+    //    });
+
+    //    //subscribe to changes to the last row
+    //    this.lastRowValue.subscribe(function (newValue) {
+    //        if (newValue) {
+    //            that.tableRows.push(new tableRow('', that));
+    //        }
+    //    });
+    //}
+
+    var dates = [new Date(2018, 4 - 1, 30), new Date(2018, 5 - 1, 1)];
+
+
+    $(document).ready(function () {
+        //ko.applyBindings(new tableRowsViewModel());
+
+        $('#AlgoToolTip').attr("title", '<table style="table-layout:fixed;"><tr><td style="max-width:150px;">Random – No 2 examinees will get the exact same question paper</td></tr><tr><td> Alternate – Every other exam gets a different question paper</td></tr></table>');
+
+
+        $('#txtScheduleDate').datepicker({
+            autoclose: true,
+            todayHighlight: true,
+            daysOfWeekHighlighted: [1, 2],
+            //beforeShowDay: highlightDays
+            //beforeShowDay: function (date) {
+            //    var Highlight = SelectedDates[date];
+            //    if (Highlight) {
+            //        return [true, "Highlighted", Highlight];
+            //    }
+            //    else {
+            //        return [true, '', ''];
+            //    }
+            //}
+        });
+        //$("#txtScheduleDate").datepicker("setDate", new Date('2018/3/31'));
+        //$("#txtScheduleDate").val("");
+
+    });
+
+    function highlightDays(date) {
+        for (var i = 0; i < dates.length; i++) {
+            if (dates[i].getTime() == date.getTime()) {
+                return [true, 'highlight'];
+            }
+        }
+        return [true, ''];
+
+    }
+
+    function pad(str, max) {
+        str = str.toString();
+        return str.length < max ? pad("0" + str, max) : str;
+    }
+
+    $(document).on("click", "#btnSubmitSchedule", function () {
+        //alert($('#txtCourse').val());
+        //alert($('#sid').val());
+        //alert($('#hdnProgramId').val());
+        //alert($("#assid").val());
+        //alert($("#txtScheduleDate").val());
+        var schdate = new Date($("#txtScheduleDate").val());
+        //alert($("#txtScheduleTime").val());
+        //alert($("#txtDuration").val());
+        //alert($("#txtPassPercent").val());
+        //alert($("#txtRoomNumber").val());
+        //alert($("#txtProctor").attr("tag"));
+        if ($('#sid').val() == "")
+            sid = 0;
+        else
+            sid = $('#sid').val();
+
+        var schrec = JSON.stringify({
+            "ExamScheduleId": sid,
+            "AssessmentId": $("#assid").val(),
+            "Course": $('#txtCourse').val(),
+            "ScheduleDate": schdate.getFullYear() + '-' + pad(schdate.getMonth(), 2) + '-' + pad(schdate.getDate(), 2) + 'T' + $("#txtScheduleTime").val() + ":00",
+            "Duration": $("#txtDuration").val(),
+            "PassPercentage": $("#txtPassPercent").val(),
+            "LearningCenterId": 1,
+            "RoomNumber": $("#txtRoomNumber").val(),
+            "StatusId": 0,
+            "RecordStatusId": 1,
+            "ExamScheduleProctorEntities":
+                [{
+                    "Id": $('#hdnExamScheduleProctorEntitiesid').val(),
+                    "ExamScheduleId": sid,
+                    "ProctorId": $('#hdnProctorId').val(),
+                    "RecordStatusId": 1
+                }],
+
+            //"ExamineeEntities":
+            //    [{
+            //        "Id": 5,
+            //        "ExamScheduleId": 2,
+            //        "ExamineeId": "bfff12ff-0094-4343-afe4-d767482f8d29",
+            //        "StatusId": null, "CreatedDate": "2018-02-01T14:52:25",
+            //        "LastModifiedDate": "0001-01-01T00:00:00",
+            //        "CreatedById": "e844b732-55b1-473b-8176-f3fbef644d65",
+            //        "LastModifiedById": "00000000-0000-0000-0000-000000000000",
+            //        "CreatedByIp": "::1",
+            //        "LastModifiedByIp": null,
+            //        "RecordStatusId": 1,
+            //        //"ExamineeName": "Alex Pierce",
+            //        //"ExamineePNumber": "ALEXP007",
+            //        //"ExamineeEmailId": "Alex.pierce@smuemt.com"
+            //    }]
+        });
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/saveExamSchedule',
+            //data: JSON.stringify([{"ExamineeQuestionId": "10"}]),
+            data: schrec,
+            contentType: "application/json",
+            dataType: 'json',
+            //dataType: 'text',
+            async: "false",
+            success: function (data, status, xhr) {
+                alert("The result is : " + status + ": " + data);
+                $('#sid').val(data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+        //btnSubmitExaminee();
+    });
+
+    $(function () {
+        $("#btnAddExaminee").click(function () {
+            /////create table dynamic
+            //var prgtbid = '';
+            //var tbcontent = '';
+            //$("#exmstcount tr").each(function () {
+            //    prgtbid += $(this).find("td:first").text() + ","; //put elements into array
+            //});
+            //tbcontent += '<tr><td style="display:none;">' + $(this).attr('value') + '</td>';
+            //tbcontent += '<td ><div  contenteditable="true">Name';
+            ////tbcontent += '</td><td><div contenteditable="true" class="text-right" onkeypress="return IsNumberKeyed(event)">0</div></td><td><div  contenteditable="true" class="text-right"  onkeypress="return IsNumberKeyed(event)">0</div></td><td><div  contenteditable="true" class="text-right" onkeypress="return IsNumberKeyed(event)">0</div></td></tr>';
+            //tbcontent += '</td><td><div  contenteditable="true">email</div></td><td><button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnAddExaminee">Delete</button></td></tr>';
+            //$('#exmstcount').append(tbcontent);
+
+            //$('#txtClientCount').val(0);
+
+            //$("#modal-ValidateUser").modal('toggle');
+            var addExRow = '<tr>';
+                    addExRow += '<td style="display:none">';
+                    addExRow += '<input type="text"  />';
+                    addExRow += '</td>';
+                    addExRow += '<td style="display:none">';
+                    addExRow += '<input type="text" />';
+                    addExRow += '</td>';
+                    addExRow += '<td style="width:30%">';
+                    addExRow += '<input type="text" class="form-control" />';
+                    addExRow += '</td>';
+                    addExRow += '<td style="width:30%">';
+                    //addExRow += '<input type="text" class="form-control" value="' + password_generator(6) + '"/>';
+                    addExRow += '<input type="text" class="form-control" value=""/>';
+                    addExRow += '</td>';
+                    addExRow += '<td class=".dont-break-out" style="width:40%";>';
+                    addExRow += '<input type="text" class="form-control" />';
+                    addExRow += '</td>';
+                    addExRow += '<td style="width:2%">';
+                    addExRow += '<button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" style="width:65px;" onclick="deleteRow(this)">';
+
+                    addExRow += '            Delete';
+                    addExRow += '</button>';
+                    addExRow += '</td>';
+                    addExRow += '</tr>';
+
+                    $('#tblExaminee').append(addExRow);
+        });
+
+
+    });
+
+    function password_generator(plength) {
+        //var keylistalpha = "abcdefghijklmnopqrstuvwxyz";
+        var keylistint = "123456789";
+        //var keylistspec = "!@@#_";
+        var temp = '';
+        var len = plength;
+        //var len = len - 1;
+        var lenspec = plength - len - len;
+
+        //for (i = 0; i < len; i++)
+        //    temp += keylistalpha.charAt(Math.floor(Math.random() * keylistalpha.length));
+
+        //for (i = 0; i < lenspec; i++)
+        //    temp += keylistspec.charAt(Math.floor(Math.random() * keylistspec.length));
+
+        for (j = 0; j < len; j++)
+            temp += keylistint.charAt(Math.floor(Math.random() * keylistint.length));
+
+        temp = temp.split('').sort(function () { return 0.5 - Math.random() }).join('');
+
+        return temp;
+    }
+
+
+    function CreateGuid() {
+        function _p8(s) {
+            var p = (Math.random().toString(16) + "000000000").substr(2, 8);
+            return s ? "-" + p.substr(0, 4) + "-" + p.substr(4, 4) : p;
+        }
+        return _p8() + _p8(true) + _p8(true) + _p8();
+    }
+
+    //$(document).on("click", "#btnSubmitExaminee", function () {
+    function btnSubmitExaminee() {
+        var sid = $('#sid').val();
+
+        var strec = '[';
+        $("#tblExaminee tr:gt(0)").each(function () {
+            var this_row = $(this);
+            var stid = $.trim(this_row.find("td:eq(0) input[type='text']").val());
+            var stexamineeid = $.trim(this_row.find("td:eq(1) input[type='text']").val());
+            var stusername = $.trim(this_row.find("td:eq(2) input[type='text']").val());
+            var stpassword = $.trim(this_row.find("td:eq(3) input[type='text']").val());
+            //var stemail = $.trim(this_row.find("td:eq(4) input[type='text']").val());
+            if (stid == "") stid = 0;
+            if (stexamineeid == "") stexamineeid = CreateGuid();
+            if (stusername != "") {
+                strec += '{"Id": ' + stid + ',',
+                strec += '            "ExamScheduleId": ' + sid + ',';
+                strec += '            "ExamineeId": "' + stexamineeid + '",';
+                strec += '           "RecordStatusId": 1,';
+                //strec += '            "UserName": "' + stusername + '",';
+                strec += '            "Passcode": "' + password_generator(6) + '",';
+                //strec += '           "EmailId": "' + stemail + '",';
+                strec += '"StatusId":0,';
+                //strec += '"MyFlightSafetyId":"",';
+                //strec += '"IsGenerated":"true",';
+                strec += '},';
+            }
+        });
+        strec += ']';
+        $.ajax({
+            type: "POST",
+            url: '@(System.Configuration.ConfigurationManager.AppSettings["webAPIURL"].ToString())/api/SaveExaminees',
+            //data: JSON.stringify([{"ExamineeQuestionId": "10"}]),
+            data: strec,
+            contentType: "application/json",
+            dataType: 'json',
+            //dataType: 'text',
+            success: function (data, status, xhr) {
+                alert("The result is : " + status + ": " + data);
+                //$('#sid').val(data);
+            },
+            error: function (xhr) {
+                alert("err: " + xhr.statusText);
+            }
+        });
+    }
+    //});
+
+    function loadClient(clientDetails) {
+        for (i = 0; i < clientDetails.length ; i++) {
+            var addExRow = '<tr>';
+            addExRow += '<td style="display:none">';
+            addExRow += '<input type="text" value="' + clientDetails[i].Id + '" />';
+            addExRow += '</td>';
+            addExRow += '<td style="display:none">';
+            addExRow += '<input type="text" value"' + clientDetails[i].ExamineeId + '" />';
+            addExRow += '</td>';
+            addExRow += '<td style="width:30%">';
+            addExRow += '<input type="text" class="form-control" value="' + clientDetails[i].ExamineeRefId + '" />';
+            addExRow += '</td>';
+            addExRow += '<td style="width:30%">';
+            addExRow += '<input type="text" class="form-control" value="' + clientDetails[i].ExamineeName + '"/>';
+            addExRow += '</td>';
+            addExRow += '<td class=".dont-break-out" style="width:40%";>';
+            addExRow += '<input type="text" class="form-control"  value="' + clientDetails[i].ExamineeEmail + '"/>';
+            addExRow += '</td>';
+            addExRow += '<td style="width:2%">';
+            addExRow += '<button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" style="width:65px;" onclick="deleteRow(this)">';
+
+            addExRow += '            Delete';
+            addExRow += '</button>';
+            addExRow += '</td>';
+            addExRow += '</tr>';
+
+            $('#tblExaminee').append(addExRow);
+        }
+
+
+    }
+
+    $(document).on("click", "#btnDispExam", function () {
+        //if ($('#txtClientCount').val() > 0) {
+        //    for (i = 0; i < $('#txtClientCount').val() ; i++) {
+        //        var addExRow = '<tr>';
+        //        addExRow += '<td style="display:none">';
+        //        addExRow += '<input type="text"  />';
+        //        addExRow += '</td>';
+        //        addExRow += '<td style="display:none">';
+        //        addExRow += '<input type="text" />';
+        //        addExRow += '</td>';
+        //        addExRow += '<td style="width:30%">';
+        //        addExRow += '<input type="text" class="form-control" value="USR' + $('#sid').val().toString() + pad(i + 1, 2) + '" />';
+        //        addExRow += '</td>';
+        //        addExRow += '<td style="width:30%">';
+        //        //addExRow += '<input type="text" class="form-control" value="' + password_generator(6) + '"/>';
+        //        addExRow += '<input type="text" class="form-control" value=""/>';
+        //        addExRow += '</td>';
+        //        addExRow += '<td class=".dont-break-out" style="width:40%";>';
+        //        addExRow += '<input type="text" class="form-control" />';
+        //        addExRow += '</td>';
+        //        addExRow += '<td style="width:2%">';
+        //        addExRow += '<button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" style="width:65px;" onclick="deleteRow(this)">';
+
+        //        addExRow += '            Delete';
+        //        addExRow += '</button>';
+        //        addExRow += '</td>';
+        //        addExRow += '</tr>';
+
+        //        $('#tblExaminee').append(addExRow);
+        //    }
+        //}
+
+        //$('#modal-StartExam').modal({
+        //    backdrop: 'static',
+        //    keyboard: false
+        //});
+
+
+        //btnSubmitExaminee();
+
+
+    });
+
+</script>
+@* dialog displayed when exam timed out *@
+<div class="modal fade" id="modal-ValidateUser">
+    <div class="modal-dialog" style="margin-top:200px; width:350px">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color:rgb(24,64,118);color:white">
+                @*<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>*@
+                <h4 class="modal-title">eTesting Client</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12" style="text-align:center">
+                        @*<h4 class="label-warning">
+                                Information: Client validation.
+                            </h4>*@
+
+                        <br />
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="col-md-7" style="padding-top:5px">
+                            How many Clients?
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="txtClientCount" />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary" id="btnDispExam" data-dismiss="modal">Ok</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@*******************************************************@
+
+<div class="row" ng-app="appProctor" ng-controller="conProctor" id="divExamScheduler" data-ng-init="GetExamScheduler('@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]',@ViewData["sid"])">
+    <div>
+        <input ng-model="ScheduleId" id="sid" type="text" style="display:none" />
+        <input ng-model="AssessmentId" id="assid" type="text" style="display:none" />
+        <input ng-model="TempProgramId" id="hdnProgramId" type="text" style="display:none">
+        <input ng-model="ProctorUserId" id="hdnProctorId" type="text"  style="display:none">
+        @*<input ng-model="ExamScheduleProctorEntitiesId" id="hdnExamScheduleProctorEntitiesid" type="text"  style="display:none">*@
+    </div>
+    <div class="col-xs-12 col-md-7">
+        <div class="box-header with-border">
+            <h3 class="box-title">Exam Schedule</h3>
+        </div>
+        <div class="box box-default">
+            <div class="box-body">
+                <!--Class -->
+                @*<div class="row">
+                        <ion-item>
+                            <ion-label>Gender</ion-label>
+                            <ion-select [(ngModel)]="gender">
+                                <ion-option value="f">Female</ion-option>
+                                <ion-option value="m">Male</ion-option>
+                            </ion-select>
+                        </ion-item>
+                    </div>*@
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Course</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="Course" id="txtCourse" class="form-control" placeholder="Enter Course">
+                        </div>
+                    </div>
+                </div>
+
+                <!--Program title -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Program</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="ProgramTitle" class="form-control" id="txtProgram" placeholder="Select Program">
+                        </div>
+                    </div>
+                </div>
+                <!--Assessment Selection -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Assessment</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="AssessmentTitle" class="form-control" id="txtAssessment" placeholder="Select Assessment">
+                        </div>
+                    </div>
+                </div>
+                <!--Date and Time-->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Examination Date</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <div class="input-group date">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar"></i>
+                                </div>
+                                <input type="text" ng-model="ScheduleDate" class="form-control active" id="txtScheduleDate" placeholder="Enter Examination Date">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar-times-o"></i>
+                                </div>
+                                <input type="text" ng-model="ScheduleTime" class="form-control" id="txtScheduleTime" data-inputmask="'alias': 'hh:mm'" data-mask="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Duration -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Duration (Mins)</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="Duration" class="form-control" id="txtDuration" placeholder="Duration">
+                        </div>
+                    </div>
+                </div>
+                <!-- Pass Percentage -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Pass Percentage</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" value="75%" class="form-control" id="txtPassPercent" placeholder="Pass Percentage">
+                        </div>
+                    </div>
+                </div>
+                <!--Learning Center -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Learning Center</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8" data-ng-init="GetCenters('@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]')">
+                            <select name="centers" ng-options="center.name for center in centerlist" ng-model="LearningCenterId" style="width:100%;">
+                                <option value="">Select Learning Center</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!--Room Number -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Room Number</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="RoomNumber" class="form-control" id="txtRoomNumber" placeholder="Enter Room Number">
+                        </div>
+                    </div>
+                </div>
+                <!--Proctor -->
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Proctor(s)</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" ng-model="ProctorUserName" id="txtProctor" multiple class="form-control" placeholder="Select Proctor">
+                        </div>
+                    </div>
+                </div>
+                <!--Examinee count
+                <div class="row">
+                    <div class="form-group" style="margin-top:5px">
+                        <div class="col-xs-7 col-md-4">
+                            <label>Examinee Count</label>
+                        </div>
+                        <div class="col-xs-7 col-md-8">
+                            <input type="text" class="form-control" id="txtExamineeCount" placeholder="Examinee count">
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+        <div class="box-header">
+            <div class="row">
+
+                <div class="col-xs-7 col-md-4">
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-12 col-md-5">
+        <div class="box-header with-border">
+            <h3 class="box-title">Clients</h3>
+        </div>
+        <div class="box box-default">
+
+            <div class="box-body">
+
+                <div class="row">
+                    @*<button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnAddExaminee" data-bind="click: addNewRow">
+                            Add Client(s)
+                        </button>*@
+                    <div class="form-group">
+                        <table id="tblExaminee" border="1" style="padding:0px;margin:0px">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="display:none">
+                                        id
+                                    </th>
+                                    <th class="text-center" style="display:none">
+                                        userid
+                                    </th>
+                                    <th class="text-center" style="width:30%">
+                                        Client ID
+                                    </th>
+                                    <th class="text-center" style="width:30%">
+                                        Name
+                                    </th>
+                                    <th class="text-center" style="width:40%;word-wrap:break-word">
+                                        Email
+                                    </th>
+                                    <th class="text-center" style="width:2%">
+                                        &nbsp;
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody @*data-bind="template:{name:'tableRow', foreach: tableRows}"*@>
+                                @*<tr ng-repeat="examineeEntities in ExamineeEntities">
+                                        <td style="width:5%">{{examineeEntities.ExamineePNumber}}</td>
+                                        <td style="width:40%">{{examineeEntities.ExamineeName}}</td>
+                                        <td class="dont-break-out" style="width:50%;word-wrap:break-word">{{examineeEntities.ExamineeEmailId}}</td>
+                                        <td style="width:5%;">
+                                            <button type=" button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnAddExaminee" onclick="deleteRow(this)" style="width:110px">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>*@
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td align="left" style="padding-right:2px;" colspan="4">
+                                        <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnAddExaminee" @*data-bind="click: addNewRow"*@>
+                                            Add Client
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-4">
+    </div>
+    <div class="col-xs-5">
+        <button type="button" class="btn btn-group-lg btn-primary" id="btnSubmitSchedule" style="width:110px">
+            Submit
+        </button>
+
+        <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCancel" onclick="location.href='@Url.Action("ExamSchedulers", "Home")'" style="width:110px">
+            Cancel
+        </button>
+        <button type="button" id="btnExamPreview" style="width:110px"
+                class="btn btn-primary"
+                onclick="window.open('@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/Home/ExamScreen?AssessmentName=9dd11ea2-9081-4f2b-90f1-8d19bb3b99a6&ProctorID=v00001925', '_blank')">
+            Preview
+        </button>
+    </div>
+</div>

@@ -1,0 +1,349 @@
+﻿<script src="~/Scripts/jquery-latest.min.js"></script>
+<script type="text/javascript">
+    function timeSince(date) {
+
+        var seconds = Math.floor((new Date() - date) / 1000);
+        seconds = seconds - 19800;
+        var interval = Math.floor(seconds / 31536000);
+
+        if (interval > 1) {
+            return interval + " years";
+        }
+        interval = Math.floor(seconds / 2592000);
+        if (interval > 1) {
+            return interval + " months";
+        }
+        interval = Math.floor(seconds / 86400);
+        if (interval > 1) {
+            return interval + " days";
+        }
+        interval = Math.floor(seconds / 3600);
+        if (interval > 1) {
+            return interval + " hours";
+        }
+        interval = Math.floor(seconds / 60);
+        if (interval > 1) {
+            return interval + " minutes";
+        }
+        return Math.floor(seconds) + " seconds";
+    }
+
+    $(document).ready(function () {
+        $.ajax({
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()/CreatedDate/4/messagelogs',
+            //contentType: 'text/plain',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            type: "GET", cache: false, async: false,
+            success: function (data) { 
+                if (data != "[]") {
+                    $('#msgIconCount').html(data.length);
+                    $('#msgListCount').html('You have ' + data.length + ' messages');
+                    $.each(data, function (index, val) {
+                        rowdata = '<li style="padding-left:5px">';
+                        //rowdata += '<a href="#">';
+                        rowdata += '<h4>';
+                        rowdata += val.MessageFromName;
+                        rowdata += '<small><i class="fa fa-clock-o"></i>' + timeSince(new Date(val.CreatedDate)) + '</small>';
+                        rowdata += '</h4>';
+                        rowdata += '<p>' + val.MessageLogText + '</p>';
+                        //rowdata += '</a>';
+                        rowdata += '</li>';
+                        @*//@System.Web.HttpContext.Current.Session["LoginGuid"].ToString()*@
+                        $('#liCHMessages').append(rowdata);
+                    });
+                }
+            },
+            error: function (x, y, z) {
+                alert(x.responseText + "  " + x.status);
+            }
+        });
+    })
+    $(document).on("click", "#expandsidebar", function () {
+        if ($('.content-header')[0].innerHTML.indexOf('Instructor Console') == -1) {
+            if ($('.control-sidebar').css('right') === "0px") {
+                $('.control-sidebar').css('right', "-300px");
+                $('.control-sidebar-bg').css('right', "-300px");
+            }
+            else {
+                //loadEventLog();
+                $('.control-sidebar').css('right', "0px");
+                $('.control-sidebar-bg').css('right', "0px");
+            }
+        }
+        else {
+            if ($('.control-sidebar').css('right') === "0px") {
+                $('.control-sidebar').css('right', "-300px");
+                $('.control-sidebar-bg').css('right', "-300px");
+            }
+            else {
+                $('.control-sidebar').css('right', "0px");
+                $('.control-sidebar-bg').css('right', "0px");
+            }
+        }
+
+    });
+
+    function loadEventLog(scrname, eventrefid) {
+        var abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        //var timeString = myDate.getDate() + ' ' + abbrMonths[(myDate.getMonth())] + ' ' + sHour + ':' + myDate.getMinutes() + " " + sAMPM;
+        var link1 = '@Url.Action("getEventLogDetails", "Home")'; //, new { scrName = "-1", eventrefid = "-2"})';
+        //link1 = link1.replace("-1", scrname);
+        //link1 = link1.replace("-2", eventrefid);
+        //var jsonText = JSON.stringify({ scrName: scrname, eventrefid:eventrefid  });
+        $.ajax({
+            url: link1, type: "GET", cache: false, async: false, datatype: "json", contentType: "application/json; charset=utf-8",
+            data: { scrName: scrname, eventrefid: eventrefid },
+            success: function (data) {
+                //var loghtml = '<h3 class="control-sidebar-heading">Recent Activity</h3>';
+                //$('#control-sidebar-home-tab').empty();
+                for (var i = 0; i < data.length; i++) {
+                    loghtml += '<div class="menu-info ">';
+                    loghtml += '<h4 class="control-sidebar-subheading no-padding">' + data[i].Notes + '</h4>';
+                    var myDate = data[i].CreatedDate;
+                    var nowDate = new Date(parseInt(myDate.substr(6)));
+
+                    //var myDate = new Date();
+                    var sHour = nowDate.getHours();
+
+                    var sAMPM = "AM";
+
+                    var iHourCheck = parseInt(sHour);
+
+                    if (iHourCheck > 12) {
+                        sAMPM = "PM";
+                        sHour = iHourCheck - 12;
+                    }
+                    else if (iHourCheck === 0) {
+                        sHour = "12";
+                    }
+                    var timeString = sHour + ':' + nowDate.getMinutes() + " " + sAMPM + ' ' + nowDate.getDate() + '-' + abbrMonths[(nowDate.getMonth())] + '-' + nowDate.getFullYear();
+
+                    //var result = "";
+                    //result += nowDate.format("HH:MM:ss dd-mmm-yyyy");
+                    loghtml += 'at ' + timeString + '</div><div class="list-seperator"></div>';
+                }
+                $('#control-sidebar-home-tab').append(loghtml);
+            }
+        });
+
+    }
+    function HideMenuItem() {
+        $('#mnuTestAdmin').hide();
+        $('#mnuExmnCred').hide();
+        $('#mnuProcDash').hide();
+        $('#mnuSupplInfo').hide();
+        $('#mnuRoles').hide();
+        $('#mnuUsers').hide();
+        $('#mnuReports').hide();
+    }
+
+    $(document).on("click", "#btnAdmin", function () {
+
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/home/ExamSchedulers");
+
+    })
+    $(document).on("click", "#btnInstructor", function () {
+        userType = "Instructor";
+        HideMenuItem();
+        $('#mnuTestAdmin').show();
+        $('.hidden-xs').html('@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID' + ' (Instructor)')
+    })
+    $(function () {
+        if ("@FSI.LAB.eTesting.Hub.Models.GlobalVariables.UserType"  == "Admin") {
+            HideMenuItem();
+
+            $('#mnuTestAdmin').show();
+            $('#mnuExmnCred').show();
+            $('#mnuSupplInfo').show();
+            $('#mnuRoles').show();
+            $('#mnuUsers').show();
+            $('#mnuReports').show();
+            $('.hidden-xs').html('@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID' + ' (Admin)')
+        }
+        else if("@FSI.LAB.eTesting.Hub.Models.GlobalVariables.UserType" == "Instructor"){
+            HideMenuItem();
+            $('#mnuTestAdmin').show();
+            $('.hidden-xs').html('@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID' + ' (Instructor)')
+        }
+        else if ("@FSI.LAB.eTesting.Hub.Models.GlobalVariables.UserType" == "Proctor") {
+            HideMenuItem();
+            $('#mnuTestAdmin').hide();
+            $('#mnuExmnCred').show();
+            $('#mnuProcDash').show();
+            $('#mnuSupplInfo').hide();
+            $('#mnuRoles').hide();
+            $('#mnuUsers').hide();
+            $('#mnuReports').show();
+            $('.hidden-xs').html('@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID' + ' (Proctor)')
+        }
+        else {
+            HideMenuItem();
+            $('#mnuTestAdmin').hide();
+            $('#mnuExmnCred').show();
+            $('#mnuProcDash').show();
+            $('#mnuSupplInfo').hide();
+            $('#mnuRoles').hide();
+            $('#mnuUsers').hide();
+            $('#mnuReports').show();
+        }
+    });
+    $(document).on("click", "#btnProctor", function () {
+        userType = "Proctor"
+        HideMenuItem();
+        $('#mnuTestAdmin').hide();
+        $('#mnuExmnCred').show();
+        $('#mnuProcDash').show();
+        $('#mnuSupplInfo').hide();
+        $('#mnuRoles').hide();
+        $('#mnuUsers').hide();
+        $('#mnuReports').show();
+        window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())/home/ProctorDashboard");
+        $('.hidden-xs').html('@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID' + ' (Proctor)')
+    });
+
+</script>
+<header class="main-header">
+    @* BEGIN Logo
+        <a href="@Url.Action("Index", "Home")" class="logo"> *@
+    <!-- mini logo for sidebar mini 50x50 pixels -->
+    <div class="logo">
+        <span class="logo-mini">
+            <img src="~/Images/lab_logo.png" style="height:100%;width:100%;overflow:hidden" />eTst
+        </span>
+        <!-- logo for regular state and mobile devices -->
+        <span class="logo-lg"><img src="~/Images/lab_logo.png" style="height:50px;overflow:hidden" /></span>
+    </div>
+    @* </a>
+        END Logo *@
+    @* BEGIN Header *@
+    @*@{var proctorId = GlobalVariables.LoginID as string;}*@
+    <nav class="navbar navbar-static-top" role="navigation">
+        <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+            <span class="sr-only">Toggle navigation</span>
+        </a>
+        <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+                @* BEGIN Messages *@
+                <li class="dropdown messages-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-envelope-o"></i>
+                        <span class="label label-success" id="msgIconCount">0</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="header" id="msgListCount">You have 0 new messages</li>
+                        <li>
+                            <ul class="menu" id="liCHMessages">
+                            </ul>
+                        </li>
+                        <li class="footer"><a href="@Url.Action("MessageBox", "Home")">See All Messages</a></li>
+                    </ul>
+                </li>
+                @* END Messages *@
+                @* BEGIN Notifications *@
+                <li class="dropdown notifications-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-bell-o"></i>
+                        <span class="label label-warning">10</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="header">You have 10 notifications</li>
+                        <li>
+                            <ul class="menu">
+                                <li>
+                                    <a href="#">
+                                        <i class="fa fa-users text-aqua"></i> 5 new members joined today
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="footer"><a href="#">View all</a></li>
+                    </ul>
+                </li>
+                @* END Notifications *@
+                @* BEGIN Tasks *@
+                <li class="dropdown tasks-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-flag-o"></i>
+                        <span class="label label-danger">9</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="header">You have 9 tasks</li>
+                        <li>
+                            <ul class="menu">
+                                <li>
+                                    <a href="#">
+                                        <h3>
+                                            Design some buttons
+                                            <small class="pull-right">20%</small>
+                                        </h3>
+                                        <div class="progress xs">
+                                            @* Change the css width attribute to simulate progress *@
+                                            <div class="progress-bar progress-bar-aqua" style="width: 20%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                                                <span class="sr-only">20% Complete</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="footer">
+                            <a href="#">View all tasks</a>
+                        </li>
+                    </ul>
+                </li>
+                @* END Tasks *@
+                @* BEGIN User Account Menu *@
+                <li class="dropdown user user-menu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <img src="~/Content/img/user.jpg" class="user-image" alt="User Image">
+                        <span class="hidden-xs">@System.Web.HttpContext.Current.Session["AdLoginPNo"].ToString() (@System.Web.HttpContext.Current.Session["AdLoginRole"].ToString())</span>
+                    </a>
+                    <ul class="dropdown-menu" style="border-color:#205392;">
+                        <li class="user-header" style="height:75px;background:#7e7f81">
+                            @*<img src="~/Content/img/user.jpg" class="img-circle" alt="User Image">*@
+                            <div id="mnuProctorSelected">
+                                <p style="color:white">
+                                    @System.Web.HttpContext.Current.Session["AdLoginName"].ToString()
+                                    @*<small>Member since Nov. 2012</small>*@
+                                </p>
+                            </div>
+                        </li>
+                        <li class="user-body">
+                            <div class="row">
+                                <div class="col-xs-4">
+                                    <button type="button" class="btn btn-primary" id="btnInstructor">Instructor</button>
+                                </div>
+                                <div class="col-xs-4" style="margin: 0 auto; text-align: center;">
+                                    @*<a href="#">Admin</a>*@
+                                    <button type="button" class="btn btn-primary" id="btnAdmin">Admin</button>
+                                </div>
+                                <div class="col-xs-4">
+                                    @*<a href="#">Admin</a>*@
+                                    <button type="button" class="btn btn-primary" id="btnProctor">Proctor</button>
+                                </div>
+                                @*<div class="col-xs-4 text-center btn-default">
+                                        <a href="#">Friends</a>
+                                    </div>*@
+                            </div>
+                        </li>
+                        <li class="user-footer">
+                            <div class="pull-left">
+                                <a href="#" class="btn btn-default btn-flat">Profile</a>
+                            </div>
+                            <div class="pull-right">
+                                <a href='@Url.Action("LoginProctor","Login")' class="btn btn-default btn-flat">Sign out</a>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+                @* END User Account Menu *@
+                @* BEGIN Control Sidebar Toggle Button *@
+                <li>
+                    <a href="#" id="expandsidebar"><i class="fa fa-gears"></i></a>
+                </li>
+                @* END Control Sidebar Toggle Button *@
+            </ul>
+        </div>
+    </nav>
+</header>

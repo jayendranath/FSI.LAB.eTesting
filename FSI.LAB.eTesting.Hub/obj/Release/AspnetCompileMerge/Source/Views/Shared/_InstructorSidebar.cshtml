@@ -1,0 +1,279 @@
+﻿
+<style>
+    .caret.caret-up {
+        border-top-width: 0;
+        border-bottom: 4px solid #fff;
+    }
+
+        .clsUnreadcircle {
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 20px;
+    }
+
+    #unreadcircle {
+        width: 10px;
+        height: 10px;
+        background: red;
+    }
+</style>
+<script type="text/javascript">
+
+    // $('#sendChatMsg').click(function () {
+    function getDateFormat() {
+        var abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var chatmsg = "";
+        var myDate = new Date();
+        var sHour = myDate.getHours();
+
+        var sAMPM = "AM";
+
+        var iHourCheck = parseInt(sHour);
+
+        if (iHourCheck > 12) {
+            sAMPM = "PM";
+            sHour = iHourCheck - 12;
+        }
+        else if (iHourCheck === 0) {
+            sHour = "12";
+        }
+
+        var timeString = myDate.getDate() + ' ' + abbrMonths[(myDate.getMonth())] + ' ' + sHour + ':' + myDate.getMinutes() + " " + sAMPM;
+        return timeString;
+    }
+
+    function populatechathistory(clientguid) {
+        var proctguid = '@System.Web.HttpContext.Current.Session["AdLoginGuid"].ToString()';
+        var proctname = '@System.Web.HttpContext.Current.Session["AdLoginName"].ToString()';
+        var chatmsg = "";
+        $('.direct-chat-messages').empty();
+        $.ajax({
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/messagelogs',
+            //contentType: 'text/plain',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            type: "GET", cache: false, async: false,
+            success: function (data) {
+                var chatmsg = "";
+                if (data != "[]") {
+                    var msgcount = 0;
+                    $.each(data, function (index, val) {
+                        if (clientguid == val.MessageFromId && proctguid == val.MessageToId) {
+                            chatmsg = "<div class=\"direct-chat-msg\">";
+                            chatmsg += "<div class=\"direct-chat-info clearfix\">";
+                            //chatmsg += "<span class=\"direct-chat-name pull-left\">" + clientguid + " " + "</span>";
+                            chatmsg += "<span class=\"direct-chat-timestamp pull-right\">" + getDateFormat() + "</span>";
+                            chatmsg += "</div>";
+                            chatmsg += "<div class=\"direct-chat-text\" style=\"font-size:12px\">";
+                            chatmsg += val.MessageLogText;
+                            chatmsg += "</div>";
+                            chatmsg += "</div>";
+                            $('.direct-chat-messages').append(chatmsg);
+                            msgcount = msgcount + 1;
+                        }
+                        if (clientguid == val.MessageToId && proctguid == val.MessageFromId) {
+                            chatmsg = "<div class=\"direct-chat-msg right\">";
+                            chatmsg += "<div class=\"direct-chat-info clearfix\">";
+                            //chatmsg += "<span class=\"direct-chat-name pull-right\">Proctor</span>";
+                            chatmsg += "<span class=\"direct-chat-timestamp pull-left\">" + getDateFormat() + "</span>";
+                            chatmsg += "</div>";
+                            chatmsg += "<div class=\"direct-chat-text\" style=\"font-size:12px\">";
+                            chatmsg += val.MessageLogText;
+                            chatmsg += "</div>";
+                            chatmsg += "</div>";
+                            $('.direct-chat-messages').append(chatmsg);
+                        }
+                    });
+                    //$('#msgCount').html(msgcount + ' messages');
+
+                }
+            },
+            error: function (x, y, z) {
+                alert(x.responseText + "  " + x.status);
+            }
+        });
+
+
+
+    }
+    function addClientMsg(clientmsg, clientid) {
+        @*var chatmsg = "";
+        //sHour = padValue(sHour);
+        chatmsg += "<div class=\"direct-chat-msg\">";
+        chatmsg += "<div class=\"direct-chat-info clearfix\">";
+        chatmsg += "<span class=\"direct-chat-name pull-left\">" + clientid + " " + "</span>";
+        chatmsg += "<span class=\"direct-chat-timestamp pull-right\"><div id=\"unreadcircle\" class=\"clsUnreadcircle\"></div>&nbsp;" + getDateFormat() + "</span>";
+        chatmsg += "</div>";
+        chatmsg += "<div class=\"direct-chat-text\">";
+        chatmsg += clientmsg;
+        chatmsg += "</div>";
+        chatmsg += "</div>";
+        $('.direct-chat-messages').append(chatmsg);
+        @*var link1 = '@Url.Action("LogMessages", "Home")';
+        $.ajax({
+            url: link1, type: "GET", cache: false, async: false, datatype: "json",
+            data:
+                {
+                    msg: clientmsg,
+                    UID: clientid
+                },
+        });*@
+    }
+    $(document).on("click", "#sendChatMsg", function () {
+        var chatmsg = "";
+        if ($.trim($('#txtChatMsg').val()) != "") {
+            //sHour = padValue(sHour);
+            //chatmsg += "<div class=\"direct-chat-msg right\">";
+            //chatmsg += "<div class=\"direct-chat-info clearfix\">";
+            //chatmsg += "<span class=\"direct-chat-name pull-right\">Proctor</span>";
+            //chatmsg += "<span class=\"direct-chat-timestamp pull-left\">" + getDateFormat() + "</span>";
+            //chatmsg += "</div>";
+            //chatmsg += "<div class=\"direct-chat-text\" style=\"font-size:12px\">";
+            //chatmsg += $('#txtChatMsg').val();
+            //chatmsg += "</div>";
+            //chatmsg += "</div>";
+            //$('.direct-chat-messages').append(chatmsg);
+            sendIndMsgFromProctor($('#txtChatMsg').val(), $('#examineeid').html());
+            @*var link1 = '@Url.Action("LogMessages", "Home", new { msg = "-1", UID = "UID" })';
+            link1 = link1.replace("-1", $('#txtChatMsg').val());
+            link1 = link1.replace("UID", $('#examineeid').html());*@
+            //$.ajax({ url: link1, type: "POST", cache: false, async: false, });
+            @*var link1 = '@Url.Action("LogMessages", "Home")';
+            $.ajax({
+                url: link1, type: "GET", cache: false, async: false, datatype: "json",
+                data:
+                    {
+                        msg: $('#txtChatMsg').val(),
+                        UID: $('#examineeid').html()
+                    },
+            });*@
+            $('#txtChatMsg').val("");
+        }
+    });
+
+    $(document).ready(function () {
+        $('#ulUserList').on('click', 'li', function () {
+            $('.box-title').html($(this).text());
+            $('#examineeid').html($(this).attr('tag'));
+        });
+
+
+    });
+
+</script>
+<aside class="control-sidebar control-sidebar-dark">
+    @* BEGIN Tabs *@
+    <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
+        <li class="active"><a href="#control-sidebar-home-tab" data-toggle="tab"><i class="fa fa-home"></i></a></li>
+        <li><a href="#control-sidebar-settings-tab" data-toggle="tab"><i class="fa fa-gears"></i></a></li>
+    </ul>
+    @* END Tabs *@
+    <div class="tab-content">
+        @* BEGIN Home Tab *@
+        <div class="tab-pane active" id="control-sidebar-home-tab" style="padding:0px;">
+            <div class="box box-primary direct-chat direct-chat-primary">
+                <div class="box-header with-border">
+                    <h2 class="box-title" style="font-size:12px">Chat</h2>
+                    <span data-toggle="tooltip" title="3 New Messages" class="badge bg-red" id="lblUnreadCount">3</span>
+
+                    <label hidden id="examineeid"></label>
+                    <div class="box-tools pull-right">
+
+                        @*<button class="btn btn-box-tool dropdown-toggle" data-toggle="dropdown" title="Contacts"><i class="fa fa-male"></i></button>*@
+                        <ul class="dropdown-menu" id="ulUserList">
+                            <li><a href="#">Support</a></li>
+                            <li><a href="#">All</a></li>
+                        </ul>
+
+
+                        @*<button class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>*@
+                        <!-- In box-tools add this button if you intend to use the contacts pane -->
+                        @*<button class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>*@
+                    </div>
+                </div>
+                <!-- /.box-header -->
+                <div class="box-body" style="height:400px">
+                    <!-- Conversations are loaded here -->
+                    <div class="direct-chat-messages" style="height:auto">
+                        <!-- Message. Default to the left -->
+
+                        <!-- /.direct-chat-msg -->
+                    </div>
+                    <!--/.direct-chat-messages-->
+                    <!-- Contacts are loaded here -->
+                    <div class="direct-chat-contacts">
+                        <ul class="contacts-list">
+                            <li>
+                                <a href="#">
+                                    <img class="contacts-list-img" src="~/admin-lte/img/user1-128x128.jpg" alt="Contact Avatar">
+                                    <div class="contacts-list-info">
+                                        <span class="contacts-list-name">
+                                            Count Dracula
+                                            <small class="contacts-list-date pull-right">2/28/2015</small>
+                                        </span>
+                                        <span class="contacts-list-msg">How have you been? I was...</span>
+                                    </div>
+                                    <!-- /.contacts-list-info -->
+                                </a>
+                            </li>
+                            <!-- End Contact Item -->
+                        </ul>
+                        <!-- /.contatcts-list -->
+                    </div>
+                    <!-- /.direct-chat-pane -->
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer">
+                    <div class="input-group">
+                        <input type="text" name="message" placeholder="Type Message ..." class="form-control" id="txtChatMsg">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-danger btn-flat" id="sendChatMsg">Send</button>
+                        </span>
+                    </div>
+                </div>
+                <!-- /.box-footer-->
+            </div>
+            @*<ul class="control-sidebar-menu">
+                    <li>
+                        <a href="javascript::;">
+                            <i class="menu-icon fa fa-birthday-cake bg-red"></i>
+
+                            <div class="menu-info">
+                                <h4 class="control-sidebar-subheading">Langdon's Birthday</h4>
+
+                                <p>Will be 23 on April 24th</p>
+                            </div>
+                        </a>
+                    </li>
+                </ul>*@
+
+
+        </div>
+        @* END Home Tab *@
+        <div class="tab-pane" id="control-sidebar-stats-tab">Stats Tab Content</div>
+        @* BEGIN Settings Tab *@
+        <div class="tab-pane" id="control-sidebar-settings-tab">
+            <!-- Construct the box with style you want. Here we are using box-danger -->
+            <!-- Then add the class direct-chat and choose the direct-chat-* contexual class -->
+            <!-- The contextual class should match the box, so we are using direct-chat-danger -->
+            <!--/.direct-chat -->
+            @*<form method="post">
+                    <h3 class="control-sidebar-heading">General Settings</h3>
+
+                    <div class="form-group">
+                        <label class="control-sidebar-subheading">
+                            Report panel usage
+                            <input type="checkbox" class="pull-right" checked>
+                        </label>
+
+                        <p>
+                            Some information about this general settings option
+                        </p>
+                    </div>
+                </form>*@
+        </div>
+        @* END Settings Tab *@
+    </div>
+</aside>
+@* Add the sidebar's background. This div must be placed immediately after the control sidebar *@
+<div class="control-sidebar-bg"></div>

@@ -1,0 +1,46 @@
+﻿@{
+    ViewBag.Title = "index";
+    var platform = ViewBag.Platform;
+}
+@*<script src="http://etestingwebapp.azurewebsites.net/cordovaApp/app.js"></script>
+    <script src="http://etestingwebapp.azurewebsites.net/cordovadist/ios/cordova.js"></script>*@
+
+<script>
+    $(function () {
+
+        $("#radioset").buttonset();
+    });
+</script>
+<button onclick='window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee");' class="btn btn-primary">Back</button>
+<br />
+<div class="row">
+    <div id="radioset">
+        <input type="radio" id="radio1" name="radio"><label for="radio1">Choice 1</label>
+        <input type="radio" id="radio2" name="radio" checked="checked"><label for="radio2">Choice 2</label>
+        <input type="radio" id="radio3" name="radio"><label for="radio3">Choice 3</label>
+    </div>
+
+</div>
+<br />
+
+@if (platform == "android" || platform == "ios" || platform == "windows")
+{
+    @*@Scripts.Render("~/cordovadist/ios/cordova.js");*@
+    <div class="row">
+        <p><a class="btn btn-primary btn-lg">Take picture &raquo;</a></p>
+        <br />
+        @*@Scripts.Render("~/cordovaApp/app.js")*@
+        <img class="media-object pull-left" style="height:500px;width:500px" />
+        <br />
+    </div>
+}
+
+else
+{
+    <p>No valid platform found</p>
+}
+<br />
+<div class="row">
+    Found cookie platform to be: <strong>@platform</strong>
+
+</div>

@@ -1,0 +1,316 @@
+﻿@{
+    ViewBag.Title = "Exam Review";
+
+}
+@*<script src='~/scripts/jquery-latest.min.js' type='text/javascript'></script>*@
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+<link href="~/Scripts/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-ui.min.js"></script>
+<script type="text/javascript">
+    //get url paramenters
+    var getUrlParameter = function getUrlParameter(sParam) {
+        var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+            sURLVariables = sPageURL.split('&'),
+            sParameterName,
+            i;
+
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : sParameterName[1];
+            }
+        }
+    };
+    $(function () {
+        $(document).on("click", "#btnCancel", function () {
+            window.location.href = ("@(System.Configuration.ConfigurationManager.AppSettings["clientURL"].ToString())/home/examinee?eid=@System.Web.HttpContext.Current.Session["LoginGuid"]" + "&examineetype=1");
+        });
+
+        $(document).on("click", "#btnSubmit", function (e) {
+            var error = false;
+            $('.question-container').each(function () {
+                var name = $(this)[0].id;
+                //alert($('#' + name + ' input[name=' + name.substring(4) + ']:checked').val());
+                if (!$('#' + name + ' input[name=' + name.substring(4) + ']:checked').val()) {
+                    error = true;
+                    var qtext = $('#' + name + ' p').html();
+                    MessageDialog('Please review the question and select correct choice.<br><br>Question: ' + qtext);
+                    e.stopPropagation();
+                }
+            })
+            if (!error)
+                ConfirmDialog('Exam is going to mark as reviewed. Are you sure?')
+        });
+    });
+
+    function ConfirmDialog(message) {
+        $('<div></div>').appendTo('body')
+                        .html('<div><h6>' + message + '?</h6> </div>')
+                        .dialog({
+                            modal: true, title: 'Delete message', zIndex: 10000, autoOpen: true,
+                            width: 'auto', resizable: false,
+                            buttons: {
+                                Yes: function () {
+                                    // $(obj).removeAttr('onclick');
+                                    // $(obj).parents('.Parent').remove();
+
+                                    //$('body').append('<h1>Confirm Dialog Result: <i>Yes</i></h1>');
+                                    //$("#li_" + $('#hdnTabNo').val()).remove();
+                                    //$("div").remove("#" + $('#hdnTabNo').val());
+                                    //var num_tabs = $("#tabs li").length;
+                                    //if (num_tabs == 0)
+                                    //    window.top.close();
+                                    //$(this).dialog("close");
+                                },
+                                No: function () {
+                                    $('body').append('<h1>Confirm Dialog Result: <i>No</i></h1>');
+
+                                    $(this).dialog("close");
+                                }
+                            },
+                            close: function (event, ui) {
+                                $(this).remove();
+                            }
+                        });
+    };
+
+    function MessageDialog(message) {
+        $('<div></div>').appendTo('body')
+                        .html('<div><h6>' + message + '?</h6> </div>')
+                        .dialog({
+                            modal: true, title: 'Exam Review', zIndex: 10000, autoOpen: true,
+                            width: 'auto', resizable: false,
+                            buttons: {
+                                Ok: function () {
+                                    // $(obj).removeAttr('onclick');
+                                    // $(obj).parents('.Parent').remove();
+
+                                    //$('body').append('<h1>Confirm Dialog Result: <i>Yes</i></h1>');
+                                    @*hub.invoke('ProctorClosedConsoleTab', '@System.Web.HttpContext.Current.Session["AdLoginPNo"].ToString()');
+                                    $("#li_" + $('#hdnTabNo').val()).remove();
+                                    $("div").remove("#" + $('#hdnTabNo').val());
+                                    var num_tabs = $("#tabs li").length;
+                                    if (num_tabs == 0)
+                                        window.top.close();*@
+                                    $(this).dialog("close");
+                                },
+                            },
+                            close: function (event, ui) {
+                                $(this).remove();
+                            }
+                        });
+    };
+
+    $(document).ready(function () {
+        //var preview = getUrlParameter('preview');
+        //if (preview == 1) {
+        //    $('#examinee').hide();
+        //    $('#idmarks').hide();
+        //    $('#examtitle').hide();
+        //    $('#btnSubmit').hide();
+        //}
+        $.ajax({
+            url: '@System.Configuration.ConfigurationManager.AppSettings["webAPIURL"]/api/examinee/' + getUrlParameter('ExamineeSessionId') + '/session',
+            //contentType: 'text/plain',
+            contentType: "application/json; charset=utf-8",
+            dataType: 'json',
+            type: "GET", cache: false, async: false,
+            success: function (data) {
+                //if (dt.UserId === 0) {
+                var trHTML = '';
+                //var totQns = dt.length;
+                //var totCorrQns = 0;
+
+                if (data != '[]') {
+                    $('#divExTitle').html(data.Course);
+                    $('#divExamineeName').html(data.ClientName);
+                    $('#divExamineeId').html(data.ClientRefId);
+                    $('#divPercentage').html(data.ExamPercent);
+
+                    $.each(data.ExamineeQuestionEntities, function (i, item) {
+                        trHTML = '<div class="question-container" style="padding-bottom:10px" id="div_' + item.ExamineeQuestionId + '">';
+                        trHTML += '        <div class="form-group">';
+                        //trHTML += ' <a name="question1" class="question-top-anchor">sdfsdfsdf</a>';
+                        trHTML += ' <p class="question-stem">' + item.ExamineeQuestionId + '. ' + item.LABQuestionText + '</p>';
+                        //check correct response is option 1
+                        if (item.AdjResponse1 != null) {
+                            if (item.AdjResponse1 != '') {
+                                if (item.SelectedResponse == 1) {
+                                    //check if given response matches
+                                    if (item.CorrectResponse == item.SelectedResponse) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="A" class="radio" checked />   A.' + item.AdjResponse1 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:red;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="A" class="radio" checked />   A.' + item.AdjResponse1 + '</label></div>';
+                                }
+                                else {
+                                    if (item.CorrectResponse == 1) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="A" class="radio"  />   A.' + item.AdjResponse1 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label class="radio" style="margin:0;"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="A" class="radio" />   A.' + item.AdjResponse1 + '</label></div>';
+                                }
+                            }
+                        }
+                        if (item.AdjResponse2 != null) {
+                            if (item.AdjResponse2 != '') {
+                                if (item.SelectedResponse == 2) {
+                                    //check if given response matches
+                                    if (item.CorrectResponse == item.SelectedResponse) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="B" class="radio" checked />   B.' + item.AdjResponse2 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:red;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="B" class="radio" checked />   B.' + item.AdjResponse2 + '</label></div>';
+                                }
+                                else {
+                                    if (item.CorrectResponse == 2) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="B" class="radio" />   B.' + item.AdjResponse2 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label class="radio" style="margin:0;"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="B" class="radio" />   B.' + item.AdjResponse2 + '</label></div>';
+                                }
+                            }
+                        }
+                        //trHTML += ' <label class="radio" style="background-color:red;display:;"><input type="radio" name="Questions[0].answer" value="C" class="radio" checked />   C. ' + item.AdjResponse3 + '</label>';
+                        if (item.AdjResponse3 != null) {
+                            if (item.AdjResponse3 != '') {
+                                if (item.SelectedResponse == 3) {
+                                    //check if given response matches
+                                    if (item.CorrectResponse == item.SelectedResponse) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="C" class="radio" checked />   C.' + item.AdjResponse3 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:red;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="C" class="radio" checked />   C.' + item.AdjResponse3 + '</label></div>';
+                                }
+                                else {
+                                    if (item.CorrectResponse == 3) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="C" class="radio"  />   C.' + item.AdjResponse3 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label class="radio" style="margin:0;"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="C" class="radio" />   C.' + item.AdjResponse3 + '</label></div>';
+                                }
+                            }
+                        }
+                        if (item.AdjResponse4 != null) {
+                            if (item.AdjResponse4 != '') {
+                                if (item.SelectedResponse == 4) {
+                                    //check if given response matches
+                                    if (item.CorrectResponse == item.SelectedResponse) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="D" class="radio" checked />   D.' + item.AdjResponse4 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:red;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="D" class="radio" checked />   D.' + item.AdjResponse4 + '</label></div>';
+                                }
+                                else {
+                                    if (item.CorrectResponse == 4) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="D" class="radio"  />   D.' + item.AdjResponse4 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label class="radio style="margin:0;""><input   type="radio" name="' + item.ExamineeQuestionId + '" value="C" class="radio" />   D.' + item.AdjResponse4 + '</label></div>';
+                                }
+                            }
+                        }
+                        if (item.AdjResponse5 != null) {
+                            if (item.AdjResponse4 != '') {
+                                if (item.SelectedResponse == 5) {
+                                    //check if given response matches
+                                    if (item.CorrectResponse == item.SelectedResponse) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class= "radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="E" class="radio" checked />   E.' + item.AdjResponse5 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:red;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="E" class="radio" checked />   E.' + item.AdjResponse5 + '</label></div>';
+                                }
+                                else {
+                                    if (item.CorrectResponse == 5) {
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label style="background-color:lightgreen;display:inline-block;margin:0;" class="radio"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="E" class="radio"  />   E.' + item.AdjResponse5 + '</label></div>';
+                                    }
+                                    else
+                                        trHTML += ' <div style="margin-left:20px;padding:0"><label class="radio" style="margin:0;"><input   type="radio" name="' + item.ExamineeQuestionId + '" value="E" class="radio" />   E.' + item.AdjResponse5 + '</label></div>';
+                                }
+                            }
+                        }
+                        trHTML += '</div>';
+                        trHTML += '<div class="question-id hide">3274</div>';
+                        trHTML += '</div>';
+                        $('#divQuestions').append(trHTML);
+
+                    });
+                }
+
+            },
+            error: function (x, y, z) {
+                alert(x.responseText + "  " + x.status);
+            }
+        });
+    })
+</script>
+<div class="row">
+
+    <div class="col-xs-12 col-md-12">
+
+        <div class="row">
+            <div class="col-md-2" style="width:120px">
+                <label>Exam Title:</label>
+            </div>
+            <div class="col-md-4" id="divExTitle">
+
+            </div>
+
+            <div class="col-md-1" id="examinee">
+                <label>Client:</label>
+            </div>
+            <div class="col-md-4" id="divExamineeName">
+
+            </div>
+        </div>
+        <div class="row" id="idmarks">
+            <div class="col-md-2" style="width:120px">
+                <label>ID:</label>
+            </div>
+            <div class="col-md-4" id="divExamineeId">
+
+            </div>
+            <div class="col-md-1">
+                <label>Marks:</label>
+            </div>
+            <div class="col-md-4" id="divPercentage">
+
+            </div>
+        </div>
+        <div class="box box-default">
+            <div class="box-body">
+                <div class="row" style="padding-left:20px" id="divQuestions">
+                    @*<div class="question-container" style="padding-bottom:10px">
+                            <div class="form-group">
+                                <a name="question10" class="question-top-anchor"></a>
+                                <p class="question-stem">10. What is the antidote when a pilot has a hazardous attitude, such as "Impulsivity"?</p>
+                                <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_9__Id" name="Questions[9].Id" type="hidden" value="4497" />
+                                <label class="radio"><input disabled type="radio" name="Questions[9].answer" value="A" class="radio" />   A. It could happen to me.</label>
+                                <label class="radio" style="background-color:lightgreen;display:;"><input disabled type="radio" name="Questions[9].answer" value="B" class="radio" checked />   B. Do it quickly to get it over with.</label>
+                                <label class="radio"><input disabled type="radio" name="Questions[9].answer" value="C" class="radio" />   C. Not so fast, think first.</label>
+                            </div>
+                            <div class="question-id hide">3933</div>
+                        </div>*@
+                </div>
+            </div>
+
+            <div class="box-header">
+                <div class="row">
+
+                    <div class="col-xs-7 col-md-4">
+
+                    </div>
+                    <div class="col-xs-7 col-md-8">
+                        <button type="button" class="btn btn-group-lg btn-primary" id="btnSubmit" style="width:110px">
+                            Submit
+                        </button>
+                        <button type="button" class="btn btn-group-lg btn-primary" id="btnCancel" @*onclick="location.href='@Url.Action("ExamSchedulers", "Home")'"*@ style="width:110px">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

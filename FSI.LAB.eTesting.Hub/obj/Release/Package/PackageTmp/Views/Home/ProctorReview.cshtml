@@ -1,0 +1,247 @@
+﻿@{
+    ViewBag.Title = "Pending Review";
+}
+<script src="~/Scripts/angular.min.js"></script>
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+<script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>
+<script src="~/Controllers/conHub.js"></script>
+<script src="~/Controllers/Proctor.js"></script>
+<script type="text/javascript">
+    var con = $.hubConnection('@(System.Configuration.ConfigurationManager.AppSettings["websiteURL"].ToString())');
+    //var con = $.hubConnection('http://localhost:52202/');
+    var hub = con.createHubProxy('labExamHub');
+    con.qs = { SessionId: getSessionId() };
+    con.start({ transport: ['webSockets', 'serverSentEvents', 'longPolling'] }).done(function () {
+        hub.invoke("JoinExamGroup", "@ViewData["AssessmentName"].ToString()", "@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID", "Proctor");
+    });
+
+    var procID = "@FSI.LAB.eTesting.Hub.Models.GlobalVariables.LoginID";
+    var AssessmentID = "@ViewData["AssessmentID"].ToString()";
+    var AssessmentName = "@ViewData["AssessmentName"].ToString()";
+    $(function () {
+
+
+    });
+
+    $(document).ready(function () {
+        $('#divExamTitle').html(AssessmentName);
+        angular.element(document.getElementById('divProctor')).scope().getAllUsers();
+    });
+
+    // Returns a random integer between min (included) and max (included)
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    $(document).on("click", "#btnProctorReview", function () {
+        hub.invoke("ProctorGrpReview", AssessmentName);
+        window.open('@Url.Action("ExamReview", "Home")?title=@ViewData["AssessmentName"].ToString()&exID=""&exname=""&preview=1');
+    });
+
+    function abc() {
+        var currenttr = $("#tblnmlist tr:eq(1)");
+        currenttr.children('td:nth-child(6)').html(new Date().toLocaleString() + " CST");
+        currenttr.children('td:nth-child(7)').html("50");
+        currenttr.children('td:nth-child(8)').html("42(84%)");
+        currenttr.children('td:nth-child(9)').html("8(16%)");
+        currenttr.children('td:nth-child(10)').html("0(0%)");
+        currenttr.children('td:nth-child(11)').html('<i title="Corrected to 100%" class="fa fa-fw fa-check fa-2x" style="color:green">');
+
+        $("#tblnmlist tr:gt(1)").each(function () {
+            var currentTD = $(this).closest('tr');
+            var ansqno = getRandomInt(38, 50);
+            var wansqno = 0;
+            var skipansqno = 0;
+            if (ansqno != 50) {
+                wansqno = getRandomInt(50 - ansqno, +1);
+                skipansqno = 50 - ansqno - wansqno;
+                $(this).children('td:nth-child(3)').html('<input type="checkbox" checked />');
+            }
+            else {
+                $(this).children('td:nth-child(3)').html('');
+                //$(this).children('td:nth-child(11)').html('<i title="Scored to 100%" class="fa fa-fw fa-check fa-2x" style="color:green">');
+            }
+            $(this).children('td:nth-child(6)').html(new Date().toLocaleString() + " CST");
+            $(this).children('td:nth-child(7)').html("50");
+            $(this).children('td:nth-child(8)').html(ansqno + "(" + ansqno * 2 + "%)");
+            $(this).children('td:nth-child(9)').html(wansqno + "(" + wansqno * 2 + "%)");
+            $(this).children('td:nth-child(10)').html(skipansqno + "(" + skipansqno * 2 + "%)");
+        });
+
+        var currenttr = $("#tblnmlist tr:eq(6)");
+        currenttr.children('td:nth-child(3)').html('');
+        currenttr.children('td:nth-child(6)').html(new Date().toLocaleString() + " CST");
+        currenttr.children('td:nth-child(7)').html("50");
+        currenttr.children('td:nth-child(8)').html("50(100%)");
+        currenttr.children('td:nth-child(9)').html("0(0%)");
+        currenttr.children('td:nth-child(10)').html("0(0%)");
+        currenttr.children('td:nth-child(11)').html('');
+    }
+
+</script>
+
+<style type="text/css">
+    .container {
+        background-color: #99CCFF;
+        border: thick solid #808080;
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .circle {
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 20px;
+    }
+
+    #circle1 {
+        width: 30px;
+        height: 30px;
+        background: white;
+    }
+    /*general div settings*/
+    div {
+        padding: 0px;
+        margin: 0px;
+        /*border:solid;*/
+        background: linear-gradient();
+    }
+
+    table tr td{
+   padding:0px;
+   margin:0px;
+}
+    table tr{
+   height: 10px;
+}
+
+</style>
+<script>var rootApp = angular.module('rootApp', ['appProctor'])</script>
+
+
+<div ng-app="rootApp">
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div ng-app="appProctor" ng-controller="conProctor" id="divProctor" >
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-md-2">
+                            <label> Exam Title:</label>
+                        </div>
+                        <div class="col-md-3">
+                           <div id="divExamTitle"></div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Duration (Mins):</label>
+                        </div>
+                        <div class="col-md-1">
+                            1h 30m@*{{examinees.Asmt.Duration}}*@
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-md-2">
+                            <label>Start Time:</label>
+                        </div>
+                        <div class="col-md-3">
+                            2017-10-7 10:30 AM CST @*{{examinees.Asmt.Schedule}}*@
+                        </div>
+                        <div class="col-md-2">
+                            <label>End Time:</label>
+                        </div>
+                        <div class="col-md-3">
+                            2017-10-7 12:00 PM CST@*{{EndExamTime}}*@
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-md-2">
+                            <label>Proctored By:</label>
+                        </div>
+                        <div class="col-md-3">
+                            Siva; Jayendra@*{{EndExamTime}}*@
+                        </div>
+                        <div class="col-md-5" style="text-align:right">
+                            @*<button type="button" class="btn btn-group-lg btn-primary" id="btnGrpStartExam" style="width:110px">Start Exam</button>
+    <button type="button" class="btn btn-group-lg btn-primary" id="btnGrpTransferExam" style="width:110px">Transfer Exam</button>*@
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-group-lg btn-primary" id="btnProctorReview" style="width:130px">Correct to 100%</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <table border=1 style="width:100%" id="tblnmlist" class="table table-striped table-hover table-bordered row-border">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="display:none">
+                                    SessionID
+                                </th>
+                                <th class="text-center" style="display:none">
+                                    ID
+                                </th>
+                                <th class="text-center" style="width:2%">
+                                    
+                                </th>
+                                <th class="text-center" style="width:20%">
+                                    Client
+                                </th>
+                                <th class="text-center" style="width:8%">
+                                    Username
+                                </th>
+
+                                <th class="text-center" style="width:12%">
+                                    Started At
+                                </th>
+                                <th class="text-center" style="width:5%">
+                                    No. of Questions
+                                </th>
+                                <th class="text-center" style="width:5%">
+                                    Correct Responses
+                                </th>
+                                <th class="text-center" style="width:5%">
+                                    Incorrect Responses
+                                </th>
+                                <th class="text-center" style="width:5%">
+                                    Skipped Questions
+                                </th>
+                                <th class="text-center" style="width:10%">
+                                    Correct to 100%
+                                </th>
+                                @*<th style="width:10%">
+                                    Action
+                                </th>*@
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="examinee in allusers" on-finish-render="ngRepeatFinished">
+                                <td style="display:none"></td>
+                                <td style="display:none">{{examinee.ExamineeID}}</td>
+                                <td></td>
+                                <td style="">{{examinee.Name}}</td>
+                                <td>{{examinee.LoginID}}</td>
+
+                                <td></td>
+                                <td align="center"></td>
+                                <td align="center"></td>
+                                <td align="center"></td>
+                                <td align="center"></td>
+                                <td align="center">
+                                    <div>
+                                        <a target="_blank" href="@Url.Action("ExamReview", "Home")?title=@ViewData["AssessmentName"].ToString()&exID={{examinee.LoginID}}&exname={{examinee.Name}}"><img src="~/Images/Review.png?@DateTime.Now.Ticks.ToString()" width="30" height="30" /></a> @*Review</button>*@
+                                    </div>
+                                </td>
+
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,175 @@
+﻿@{
+    ViewBag.Title = "Exam Review";
+
+}
+@*<script src='~/scripts/jquery-latest.min.js' type='text/javascript'></script>*@
+<script src="~/Content/js/plugins/jquery/jquery-2.2.4.min.js"></script>
+
+<div class="row">
+
+    <div class="col-xs-12 col-md-12">
+
+        <div class="row">
+            <div class="col-md-2" style="width:120px">
+                <label>Exam Title:</label>
+            </div>
+            <div class="col-md-4">
+                @ViewData["extitle"].ToString()
+            </div>
+
+            <div class="col-md-1">
+                <label>Examinee:</label>
+            </div>
+            <div class="col-md-4">
+                @ViewData["exname"].ToString()
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2" style="width:120px">
+                <label>ID:</label>
+            </div>
+            <div class="col-md-4">
+                @ViewData["exID"].ToString()
+            </div>
+            <div class="col-md-1">
+                <label>Marks:</label>
+            </div>
+            <div class="col-md-4">
+                95%
+            </div>
+        </div>
+        <div class="box box-default">
+            <div class="box-body">
+                <div class="row" style="padding-left:20px">
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question1" class="question-top-anchor"></a>
+                            <p class="question-stem">1. What is an important airspeed limitation that is not color coded on airspeed indicators?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_0__Id" name="Questions[0].Id" type="hidden" value="4178" />
+                            <label style="font-weight:normal">  A. Never-exceed speed.</label><br />
+                            <label style="background-color:lightgreen;font-weight:normal">   B. Maximum structural cruising speed.</label><br />
+                            <label style="font-weight:normal">   C. Maneuvering speed.</label><br />
+                        </div>
+                        <div class="question-id hide">3274</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question2" class="question-top-anchor"></a>
+                            <p class="question-stem">2. To best determine general forecast weather conditions over a flight information region, the pilot should refer to</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_1__Id" name="Questions[1].Id" type="hidden" value="4616" />
+                            <label  style="background-color:red;font-weight:normal"> A. Aviation Area Forecasts.</label><br />
+                            <label  style="font-weight:normal"> B. Weather Depiction Charts.</label><br />
+                            <label  style="font-weight:normal"> C. Satellite Maps.</label><br />
+                        </div>
+                        <div class="question-id hide">3487</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question3" class="question-top-anchor"></a>
+                            <p class="question-stem">3. When does P-factor cause the airplane to yaw to the left?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_2__Id" name="Questions[2].Id" type="hidden" value="4155" />
+                            <label  style="font-weight:normal"> A. When at low angles of attack.</label><br />
+                            <label  style="background-color:lightgreen;font-weight:normal"> B. When at high angles of attack.</label><br />
+                            <label  style="font-weight:normal"> C. When at high airspeeds.</label><br />
+                        </div>
+                        <div class="question-id hide">3209</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question4" class="question-top-anchor"></a>
+                            <p class="question-stem">4. Maintenance records show the last transponder inspection was performed on September 1, 2014. The next inspection will be due no later than</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_3__Id" name="Questions[3].Id" type="hidden" value="4856" />
+                            <label  style="font-weight:normal"> A. September 30, 2015.</label><br />
+                            <label  style="font-weight:normal"> B. September 1, 2016.</label><br />
+                            <label  style="background-color:red;font-weight:normal"> C. September 30, 2016.</label><br />
+                        </div>
+                        <div class="question-id hide">3192</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question5" class="question-top-anchor"></a>
+                            <p class="question-stem">5. The operator of an aircraft that has been involved in an accident is required to file an accident report within how many days?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_4__Id" name="Questions[4].Id" type="hidden" value="4782" />
+                            <label  style="background-color:lightgreen;font-weight:normal"> A. 5.</label><br />
+                            <label  style="font-weight:normal"> B. 7.</label><br />
+                            <label  style="font-weight:normal"> C. 10.</label><br />
+                        </div>
+                        <div class="question-id hide">3199</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question6" class="question-top-anchor"></a>
+                            <p class="question-stem">6. On the calculator side of the flight computer, time is always found on which scale(s)?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_5__Id" name="Questions[5].Id" type="hidden" value="4823" />
+                            <label  style="font-weight:normal"> A. Outer.</label><br />
+                            <label  style="font-weight:normal"> B. Inner scale only.</label><br />
+                            <label  style="background-color:lightgreen;font-weight:normal"> C. Inner scale and far inner scale.</label><br />
+                        </div>
+                        <div class="question-id hide">9952</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question7" class="question-top-anchor"></a>
+                            <p class="question-stem">7. Upon encountering severe turbulence, which flight condition should the pilot attempt to maintain?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_6__Id" name="Questions[6].Id" type="hidden" value="4192" />
+                            <label  style="font-weight:normal"> A. Constant altitude and airspeed.</label><br />
+                            <label  style="background-color:red;font-weight:normal"> B. Constant angle of attack.</label><br />
+                            <label  style="font-weight:normal"> C. Level flight attitude.</label><br />
+                        </div>
+                        <div class="question-id hide">3442</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question8" class="question-top-anchor"></a>
+                            <p class="question-stem">8. A pilot who wants to operate under BasicMed completed a comprehensive medical examination (CME) with the examining doctor signing the checklist on November 24th of this year. This meets the requirement until</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_7__Id" name="Questions[7].Id" type="hidden" value="4945" />
+                            <label  style="font-weight:normal"> A. November 24th, 4 years later.</label><br />
+                            <label  style="background-color:lightgreen;font-weight:normal"> B. Indefinitely, this is a 1 time requirement.</label><br />
+                            <label  style="font-weight:normal"> C. November 30th, 4 years later.</label><br />
+                        </div>
+                        <div class="question-id hide">4121</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question9" class="question-top-anchor"></a>
+                            <p class="question-stem">9. When making routine transponder code changes, pilots should avoid inadvertent selection of which code? </p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_8__Id" name="Questions[8].Id" type="hidden" value="4885" />
+                            <label  style="background-color:lightgreen;font-weight:normal"> A. 7200.</label><br />
+                            <label  style="font-weight:normal"> B. 4000.</label><br />
+                            <label  style="font-weight:normal"> C. 7500.</label><br />
+                        </div>
+                        <div class="question-id hide">4061</div>
+                    </div>
+                    <div class="question-container" style="padding-bottom:10px">
+                        <div class="form-group">
+                            <a name="question10" class="question-top-anchor"></a>
+                            <p class="question-stem">10. What is the antidote when a pilot has a hazardous attitude, such as "Impulsivity"?</p>
+                            <input data-val="true" data-val-number="The field Id must be a number." data-val-required="The Id field is required." id="Questions_9__Id" name="Questions[9].Id" type="hidden" value="4497" />
+                            <label  style="font-weight:normal"> A. It could happen to me.</label><br />
+                            <label  style="font-weight:normal"> B. Do it quickly to get it over with.</label><br />
+                            <label  style="background-color:lightgreen;font-weight:normal"> C. Not so fast, think first.</label><br />
+                        </div>
+                        <div class="question-id hide">3933</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box-header">
+                <div class="row">
+
+                    <div class="col-xs-7 col-md-4">
+
+                    </div>
+                    <div class="col-xs-7 col-md-8">
+                        <button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnSubmit" style="width:110px">
+                            Back
+                        </button>
+                        @*<button type="button" class="btn btn-group-lg btn-primary dropdown-toggle" id="btnCancel" onclick="location.href='@Url.Action("ExamSchedulers", "Home")'" style="width:110px">
+                            Close
+                        </button>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
